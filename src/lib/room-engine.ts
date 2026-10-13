@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import type { RealtimeChannel } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { RealtimeChannel } from "./realtime-channel";
 import {
   acceptHostClaim,
   electHost,
@@ -12,10 +11,29 @@ import {
 } from "./sync";
 
 export type Me = { id: string; name: string; color: string };
-export type Member = Me & { joinedAt: number; drift: number | null; rtt: number | null; status: string };
-export type ChatMsg = { id: string; userId: string; name: string; color: string; text: string; at: number; system?: boolean };
+export type Member = Me & {
+  joinedAt: number;
+  drift: number | null;
+  rtt: number | null;
+  status: string;
+};
+export type ChatMsg = {
+  id: string;
+  userId: string;
+  name: string;
+  color: string;
+  text: string;
+  at: number;
+  system?: boolean;
+};
 export type QueueItem = { uid: string; videoId: string; addedBy: string; votes: string[] };
-export type Poll = { id: string; question: string; options: { text: string; votes: string[] }[]; by: string; closed: boolean };
+export type Poll = {
+  id: string;
+  question: string;
+  options: { text: string; votes: string[] }[];
+  by: string;
+  closed: boolean;
+};
 export type Reaction = { id: string; emoji: string; userId: string; videoId: string; t: number };
 
 export type RoomState = {
@@ -78,7 +96,11 @@ export function useRoom(code: string, me: Me | null) {
     const ch = chRef.current;
     const m = meRef.current;
     if (!ch || !m) return;
-    void ch.send({ type: "broadcast", event: "ev", payload: { type, from: m.id, sentAt: Date.now() + offsetRef.current, ...payload } });
+    void ch.send({
+      type: "broadcast",
+      event: "ev",
+      payload: { type, from: m.id, sentAt: Date.now() + offsetRef.current, ...payload },
+    });
   }, []);
 
   const commit = useCallback((fn: (s: RoomState) => void) => {
@@ -87,7 +109,10 @@ export function useRoom(code: string, me: Me | null) {
   }, []);
 
   const pushSystem = (s: RoomState, text: string) => {
-    s.chat = [...s.chat, { id: uid(), userId: "", name: "", color: "", text, at: Date.now(), system: true }].slice(-150);
+    s.chat = [
+      ...s.chat,
+      { id: uid(), userId: "", name: "", color: "", text, at: Date.now(), system: true },
+    ].slice(-150);
   };
 
   const spawnFloat = useCallback((emoji: string, name: string) => {
@@ -105,7 +130,11 @@ export function useRoom(code: string, me: Me | null) {
     offsetRef.current = 0;
     samples.current = [];
     rttRef.current = 0;
-    s.playback = { ...s.playback, position: scheduled ? s.playback.position : pos, at: Date.now() + delay };
+    s.playback = {
+      ...s.playback,
+      position: scheduled ? s.playback.position : pos,
+      at: Date.now() + delay,
+    };
     send("anchor", { pb: s.playback, rebase: true });
   }, [send]);
 
@@ -117,14 +146,23 @@ export function useRoom(code: string, me: Me | null) {
       switch (ev.type) {
         case "sync_req": {
           const hostPresent = membersRef.current.some((x) => x.id === s.hostId);
-          const fallback = !hostPresent && electHost(membersRef.current.filter((x) => x.id !== ev.from))?.id === m.id;
-          if (syncedRef.current && (isHost() || fallback)) send("sync_state", { to: ev.from, state: s });
+          const fallback =
+            !hostPresent &&
+            electHost(membersRef.current.filter((x) => x.id !== ev.from))?.id === m.id;
+          if (syncedRef.current && (isHost() || fallback))
+            send("sync_state", { to: ev.from, state: s });
           break;
         }
         case "sync_state": {
           if (ev["to"] !== m.id) break;
           const inc = ev["state"] as RoomState;
-          if (!syncedRef.current || acceptHostClaim({ hostId: s.hostId, epoch: s.hostEpoch }, { hostId: inc.hostId, epoch: inc.hostEpoch })) {
+          if (
+            !syncedRef.current ||
+            acceptHostClaim(
+              { hostId: s.hostId, epoch: s.hostEpoch },
+              { hostId: inc.hostId, epoch: inc.hostEpoch },
+            )
+          ) {
             stateRef.current = inc;
             syncedRef.current = true;
             samples.current = [];
@@ -132,18 +170,26 @@ export function useRoom(code: string, me: Me | null) {
             setReady(true);
             rerender();
             // fast initial clock sync burst
-            for (let i = 0; i < 5; i++) setTimeout(() => send("ping", { to: stateRef.current.hostId, t0: Date.now() }), 150 * i);
+            for (let i = 0; i < 5; i++)
+              setTimeout(
+                () => send("ping", { to: stateRef.current.hostId, t0: Date.now() }),
+                150 * i,
+              );
           }
           break;
         }
         case "ping": {
-          if (ev["to"] === m.id && isHost()) send("pong", { to: ev.from, t0: ev["t0"], th: Date.now() });
+          if (ev["to"] === m.id && isHost())
+            send("pong", { to: ev.from, t0: ev["t0"], th: Date.now() });
           break;
         }
         case "pong": {
           if (ev["to"] !== m.id || ev.from !== s.hostId) break;
           const t1 = Date.now();
-          samples.current = [...samples.current, { t0: ev["t0"] as number, th: ev["th"] as number, t1 }].slice(-12);
+          samples.current = [
+            ...samples.current,
+            { t0: ev["t0"] as number, th: ev["th"] as number, t1 },
+          ].slice(-12);
           const c = estimateClock(samples.current);
           if (c) {
             offsetRef.current = c.offset;
@@ -156,7 +202,10 @@ export function useRoom(code: string, me: Me | null) {
           break;
         case "lat_pong":
           if (ev["to"] === m.id) {
-            pingLatency.current = [...pingLatency.current, (Date.now() - (ev["t0"] as number)) / 2].slice(-1000);
+            pingLatency.current = [
+              ...pingLatency.current,
+              (Date.now() - (ev["t0"] as number)) / 2,
+            ].slice(-1000);
             statsListeners.current.forEach((l) => l());
           }
           break;
@@ -168,17 +217,25 @@ export function useRoom(code: string, me: Me | null) {
             offsetRef.current = ev.sentAt - Date.now();
             s.playback = inc;
             rerender();
-            for (let i = 0; i < 4; i++) setTimeout(() => send("ping", { to: s.hostId, t0: Date.now() }), 120 * i);
+            for (let i = 0; i < 4; i++)
+              setTimeout(() => send("ping", { to: s.hostId, t0: Date.now() }), 120 * i);
             break;
           }
           if (ev.type === "ctrl") {
-            ctrlLatency.current = [...ctrlLatency.current, Math.max(0, Date.now() + offsetRef.current - ev.sentAt)].slice(-500);
+            ctrlLatency.current = [
+              ...ctrlLatency.current,
+              Math.max(0, Date.now() + offsetRef.current - ev.sentAt),
+            ].slice(-500);
             statsListeners.current.forEach((l) => l());
           }
-          if (isNewerPlayback(s.playback, inc) || (ev.type === "anchor" && inc.seq === s.playback.seq && inc.by === s.playback.by)) {
+          if (
+            isNewerPlayback(s.playback, inc) ||
+            (ev.type === "anchor" && inc.seq === s.playback.seq && inc.by === s.playback.by)
+          ) {
             const changedVideo = inc.videoId !== s.playback.videoId;
             s.playback = inc;
-            if (changedVideo && inc.videoId) s.history = [...s.history.filter((h) => h !== inc.videoId), inc.videoId].slice(-20);
+            if (changedVideo && inc.videoId)
+              s.history = [...s.history.filter((h) => h !== inc.videoId), inc.videoId].slice(-20);
             rerender();
           }
           break;
@@ -218,7 +275,9 @@ export function useRoom(code: string, me: Me | null) {
           break;
         }
         case "q_vote": {
-          s.queue = s.queue.map((q) => (q.uid === ev["uid"] ? { ...q, votes: toggle(q.votes, ev.from) } : q));
+          s.queue = s.queue.map((q) =>
+            q.uid === ev["uid"] ? { ...q, votes: toggle(q.votes, ev.from) } : q,
+          );
           rerender();
           break;
         }
@@ -233,7 +292,13 @@ export function useRoom(code: string, me: Me | null) {
         case "poll_vote": {
           if (s.poll && s.poll.id === ev["pollId"] && !s.poll.closed) {
             const idx = ev["option"] as number;
-            s.poll = { ...s.poll, options: s.poll.options.map((o, i) => ({ ...o, votes: i === idx ? addOnce(o.votes, ev.from) : o.votes.filter((v) => v !== ev.from) })) };
+            s.poll = {
+              ...s.poll,
+              options: s.poll.options.map((o, i) => ({
+                ...o,
+                votes: i === idx ? addOnce(o.votes, ev.from) : o.votes.filter((v) => v !== ev.from),
+              })),
+            };
             rerender();
           }
           break;
@@ -257,9 +322,7 @@ export function useRoom(code: string, me: Me | null) {
     joinedAt.current = Date.now();
     stateRef.current = emptyState();
     syncedRef.current = false;
-    const ch = supabase.channel(`watchparty:${code}`, {
-      config: { broadcast: { self: false, ack: false }, presence: { key: me.id } },
-    });
+    const ch = new RealtimeChannel(code, me.id);
     chRef.current = ch;
     let bootTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -278,7 +341,8 @@ export function useRoom(code: string, me: Me | null) {
       if (!syncedRef.current) return;
       for (const p of newPresences) {
         const pm = p as unknown as Member;
-        if (pm.id !== me.id && !membersRef.current.some((x) => x.id === pm.id)) commit((s) => pushSystem(s, `${pm.name} joined`));
+        if (pm.id !== me.id && !membersRef.current.some((x) => x.id === pm.id))
+          commit((s) => pushSystem(s, `${pm.name} joined`));
       }
     });
     ch.on("presence", { event: "leave" }, ({ leftPresences }) => {
@@ -291,7 +355,13 @@ export function useRoom(code: string, me: Me | null) {
     ch.subscribe((st) => {
       if (st === "SUBSCRIBED") {
         setStatus("live");
-        void ch.track({ ...me, joinedAt: joinedAt.current, drift: null, rtt: null, status: "watching" });
+        void ch.track({
+          ...me,
+          joinedAt: joinedAt.current,
+          drift: null,
+          rtt: null,
+          status: "watching",
+        });
         // ask existing members for state (late join / reconnect)
         send("sync_req");
         clearTimeout(bootTimer);
@@ -314,7 +384,7 @@ export function useRoom(code: string, me: Me | null) {
 
     return () => {
       clearTimeout(bootTimer);
-      void supabase.removeChannel(ch);
+      ch.close();
       chRef.current = null;
     };
   }, [code, me, handle, send, commit]);
@@ -333,7 +403,13 @@ export function useRoom(code: string, me: Me | null) {
         send("ping", { to: s.hostId, t0: Date.now() });
       }
       if (tick % 3 === 0 && chRef.current) {
-        void chRef.current.track({ ...me, joinedAt: joinedAt.current, drift: driftRef.current, rtt: isHost() ? 0 : rttRef.current, status: "watching" });
+        void chRef.current.track({
+          ...me,
+          joinedAt: joinedAt.current,
+          drift: driftRef.current,
+          rtt: isHost() ? 0 : rttRef.current,
+          status: "watching",
+        });
       }
       // failover: host disappeared from presence
       const present = membersRef.current;
@@ -363,12 +439,21 @@ export function useRoom(code: string, me: Me | null) {
     (patch: Partial<Playback>, leadMs = 0) => {
       const m = meRef.current;
       if (!m) return false;
-      if (!(stateRef.current.controlMode === "all" || stateRef.current.hostId === m.id)) return false;
+      if (!(stateRef.current.controlMode === "all" || stateRef.current.hostId === m.id))
+        return false;
       const s = stateRef.current;
       const now = Date.now() + offsetRef.current;
       const pos = expectedPosition(s.playback, now);
-      const next: Playback = { ...s.playback, position: pos, ...patch, at: now + leadMs, seq: s.playback.seq + 1, by: m.id };
-      if (next.videoId && next.videoId !== s.playback.videoId) s.history = [...s.history.filter((h) => h !== next.videoId), next.videoId].slice(-20);
+      const next: Playback = {
+        ...s.playback,
+        position: pos,
+        ...patch,
+        at: now + leadMs,
+        seq: s.playback.seq + 1,
+        by: m.id,
+      };
+      if (next.videoId && next.videoId !== s.playback.videoId)
+        s.history = [...s.history.filter((h) => h !== next.videoId), next.videoId].slice(-20);
       s.playback = next;
       send("ctrl", { pb: next });
       rerender();
@@ -386,7 +471,14 @@ export function useRoom(code: string, me: Me | null) {
     chat: (text: string) => {
       const m = meRef.current;
       if (!m || !text.trim()) return;
-      const msg: ChatMsg = { id: uid(), userId: m.id, name: m.name, color: m.color, text: text.trim().slice(0, 500), at: Date.now() };
+      const msg: ChatMsg = {
+        id: uid(),
+        userId: m.id,
+        name: m.name,
+        color: m.color,
+        text: text.trim().slice(0, 500),
+        at: Date.now(),
+      };
       commit((s) => (s.chat = [...s.chat, msg].slice(-150)));
       send("chat", { msg });
     },
@@ -409,7 +501,12 @@ export function useRoom(code: string, me: Me | null) {
     voteQueue: (u: string) => {
       const m = meRef.current;
       if (!m) return;
-      commit((s) => (s.queue = s.queue.map((q) => (q.uid === u ? { ...q, votes: toggle(q.votes, m.id) } : q))));
+      commit(
+        (s) =>
+          (s.queue = s.queue.map((q) =>
+            q.uid === u ? { ...q, votes: toggle(q.votes, m.id) } : q,
+          )),
+      );
       send("q_vote", { uid: u });
     },
     removeQueue: (u: string) => {
@@ -428,7 +525,13 @@ export function useRoom(code: string, me: Me | null) {
     createPoll: (question: string, options: string[]) => {
       const m = meRef.current;
       if (!m) return;
-      const poll: Poll = { id: uid(), question, options: options.map((text) => ({ text, votes: [] })), by: m.id, closed: false };
+      const poll: Poll = {
+        id: uid(),
+        question,
+        options: options.map((text) => ({ text, votes: [] })),
+        by: m.id,
+        closed: false,
+      };
       commit((s) => (s.poll = poll));
       send("poll", { poll });
     },
@@ -437,7 +540,14 @@ export function useRoom(code: string, me: Me | null) {
       const p = stateRef.current.poll;
       if (!m || !p || p.closed) return;
       commit((s) => {
-        if (s.poll) s.poll = { ...s.poll, options: s.poll.options.map((o, i) => ({ ...o, votes: i === option ? addOnce(o.votes, m.id) : o.votes.filter((v) => v !== m.id) })) };
+        if (s.poll)
+          s.poll = {
+            ...s.poll,
+            options: s.poll.options.map((o, i) => ({
+              ...o,
+              votes: i === option ? addOnce(o.votes, m.id) : o.votes.filter((v) => v !== m.id),
+            })),
+          };
       });
       send("poll_vote", { pollId: p.id, option });
     },
@@ -451,7 +561,11 @@ export function useRoom(code: string, me: Me | null) {
       if (!isHost()) return;
       const s = stateRef.current;
       // re-anchor in my clock so the new host can rebase with its own offset estimate
-      s.playback = { ...s.playback, position: expectedPosition(s.playback, Date.now()), at: Date.now() };
+      s.playback = {
+        ...s.playback,
+        position: expectedPosition(s.playback, Date.now()),
+        at: Date.now(),
+      };
       s.hostId = to;
       s.hostEpoch += 1;
       const name = membersRef.current.find((x) => x.id === to)?.name ?? "Someone";

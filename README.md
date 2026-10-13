@@ -1,53 +1,52 @@
 # Watch Together
 
-create this site
-Watch Party
-
-Goal: Build a real-time watch-party app where multiple users watch videos together with synchronized playback and shared movie discovery.
-
-Core Requirements
-
-﻿﻿Create and join rooms via invite link or room code.
-
-﻿﻿Sync play, pause and seek across all participants.
-
-﻿﻿Movie recommendations with categories, filters and fuzzy search.
-
-﻿﻿Emoji reactions, live chat, shared playlists, group polls and host transfer.
-
-﻿﻿Automatic playback drift detection and correction.
-
-﻿﻿Reliable handling of late joins, reconnections and concurrent actions.
-
-Constraints
-
-﻿﻿At least 10 concurrent users per room.
-
-﻿﻿Playback control propagation ≤ 250 ms at p95 on a local network.
-
-﻿﻿Playback drift ≤ 500 ms after correction.
-
-﻿﻿Document latency measurements, test conditions and failure handling.
-
-Bonus: Creative features carry higher weightage. Evaluation favors originality, depth, multi-user interaction and reliability over basic functionality.
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/8ed3e03f-f62a-4fc1-ba88-65cfa8212aaf).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+A real-time watch-party app with synchronized playback, movie discovery, chat,
+reactions, shared queues, polls, and host transfer.
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Requires Node.js 22.12+ (or 24+) and npm.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+npm ci
 npm run dev
 ```
+
+Open the URL printed by Vite. This starts the web app and the included WebSocket
+room server on port 3001. Other devices on your network can open the app using
+your computer's LAN address; allow both ports through the firewall.
+No backend account or API key is required.
+
+## Production
+
+```sh
+npm run build
+npm start
+```
+
+Deploy both Node processes to your own server. Reverse-proxy the web app and
+WebSocket service with HTTPS/WSS. Set `VITE_REALTIME_URL` before building to the
+public WebSocket URL (for example, `wss://realtime.example.com`). Set
+`REALTIME_ORIGINS` on the realtime process to a comma-separated list of permitted
+web app origins. `REALTIME_PORT` defaults to 3001. See `.env.example`.
+
+Rooms use in-memory membership and client-replicated state. Late joins request
+state from existing participants; reconnecting clients restore their presence.
+The service runs as a single instance; room history is not persisted after every
+participant leaves or across a full restart. Room codes provide access, without
+account authentication. This is an in-progress prototype, not a hardened public
+service. Production rate limits and persistence remain future work.
+
+## Validation
+
+```sh
+npm test
+npm run test:realtime
+npm run build
+```
+
+The realtime integration test checks ten simultaneous connections, isolated
+rooms, membership updates, event forwarding, and reconnects. The app's `/docs`
+page describes playback synchronization and failure handling. Targets of 250 ms
+control latency at p95 and 500 ms corrected drift require measurement on the
+actual deployment; unit tests do not establish those guarantees.
