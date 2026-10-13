@@ -216,10 +216,8 @@ function Room() {
         <section className="watch-column">
           <div className="room-title">
             <div>
-              <p className="eyebrow">YOUR LITTLE CORNER OF THE INTERNET</p>
-              <h1>
-                Movie night <span>🍿</span>
-              </h1>
+              <p className="eyebrow">WATCH TOGETHER / SCREENING ROOM</p>
+              <h1>Movie night</h1>
             </div>
             <span>
               <Users size={16} /> {room.members.length} watching
@@ -404,7 +402,7 @@ function Room() {
           <section className="room-discovery" id="room-discover">
             <div className="discovery-heading">
               <div>
-                <p className="eyebrow">WHAT’S THE VIBE?</p>
+                <p className="eyebrow">THE SHORTLIST</p>
                 <h2>Find your next watch</h2>
               </div>
               <label className="search-field">
@@ -536,8 +534,8 @@ function Room() {
               <div className="chat-feed">
                 <div className="chat-welcome">
                   <span>🍿</span>
-                  <h3>Good company. Great commentary.</h3>
-                  <p>Say hello. Hot takes welcome.</p>
+                  <h3>The conversation starts here.</h3>
+                  <p>Say hello to the room.</p>
                 </div>
                 {s.chat.map((msg) =>
                   msg.system ? (
@@ -581,7 +579,7 @@ function Room() {
                   aria-label="Chat message"
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  placeholder="Your very important hot take…"
+                  placeholder="Write a message…"
                   maxLength={500}
                 />
                 <button
@@ -796,7 +794,7 @@ function Room() {
         <Link to="/">
           <ArrowLeft size={14} /> Leave room
         </Link>
-        <span>Good nights deserve good company.</span>
+        <span>watchtogether / by Parth</span>
         <Link to="/docs">About the sync</Link>
       </footer>
     </main>

@@ -1,16 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import {
-  ArrowRight,
-  Check,
-  Clapperboard,
-  Link2,
-  MessageCircle,
-  Play,
-  Radio,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import { ArrowRight, Check, Link2, MessageCircle, Play, Radio, Users } from "lucide-react";
 import { CATALOG } from "@/lib/catalog";
 import { loadMe, newRoomCode, saveMe } from "@/lib/identity";
 
@@ -65,18 +55,16 @@ function Index() {
       <section className="hero page-width">
         <div className="hero-copy">
           <p className="eyebrow">
-            <span className="live-dot" /> FAR APART. SAME MOVIE NIGHT.
+            <span className="live-dot" /> WATCH TOGETHER / ONLINE SCREENING ROOM
           </p>
           <h1>
-            Your people.
+            movie night,
             <br />
-            Your movie.
-            <br />
-            <em>One play button.</em>
+            <em>from anywhere.</em>
           </h1>
           <p className="hero-description">
-            Make room for a little together time. Watch in sync, share every reaction, and keep the
-            conversation going.
+            Pick a film, share your room, and watch it together. Synced playback, a running
+            conversation, and a say in what’s next.
           </p>
           <div className="party-form" id="start">
             <div className="form-tabs" role="tablist" aria-label="Party action">
@@ -98,7 +86,7 @@ function Index() {
                 go();
               }}
             >
-              <label htmlFor="display-name">What should we call you?</label>
+              <label htmlFor="display-name">Your nickname</label>
               <div className="form-row">
                 <input
                   id="display-name"
@@ -136,22 +124,15 @@ function Index() {
             </form>
           </div>
           <p className="small-note">
-            <Check size={14} /> No account. No extension. Just your friends.
+            <Check size={14} /> No account or extension needed.
           </p>
         </div>
         <div className="hero-visual">
-          <div className="orbit-label">
-            <Sparkles size={16} /> THE BEST SEAT IS NEXT TO YOUR FRIENDS
-          </div>
           <div className="preview-window" aria-label="Illustration of a watch room">
             <div className="preview-top">
+              <span>SCREEN 01</span>
               <span>
-                <i />
-                <i />
-                <i />
-              </span>
-              <span>
-                <Radio size={12} /> Movie night · preview
+                <Radio size={12} /> Room preview
               </span>
               <span>•••</span>
             </div>
@@ -182,58 +163,41 @@ function Index() {
               <span>{featured.minutes}:00</span>
             </div>
           </div>
-          <div className="chat-sticker">
-            <span className="demo-avatar">J</span>
-            <div>
-              <b>
-                Jamie <span>just now · demo</span>
-              </b>
-              <p>okay this is already my favorite scene 🍿</p>
-            </div>
-          </div>
-          <div className="reaction-sticker">
-            😂 <span>❤️</span> 🍿
-          </div>
-          <div className="visual-caption">
-            <span className="avatar-stack">
-              <i>A</i>
-              <i>J</i>
-              <i>M</i>
-            </span>
-            <span>Different couches. Same good company.</span>
-          </div>
+          <p className="screen-caption">
+            <span>01 /</span> Your film here. Your friends alongside.
+          </p>
         </div>
       </section>
       <section className="promise-strip">
         <div className="page-width">
           <span>
-            <Radio size={18} /> Playback that stays together
+            <Radio size={18} /> Synced playback
           </span>
           <span>
-            <MessageCircle size={18} /> Chat beside the action
+            <MessageCircle size={18} /> Live chat
           </span>
           <span>
-            <Users size={18} /> Everyone gets a say
+            <Users size={18} /> Shared queue & voting
           </span>
           <span>
-            <Link2 size={18} /> One link brings you in
+            <Link2 size={18} /> Invite by link
           </span>
         </div>
       </section>
       <section className="discovery page-width" id="discover">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">LESS SCROLLING, MORE WATCHING</p>
-            <h2>Something for tonight.</h2>
+            <p className="eyebrow">THE SHORTLIST / 02</p>
+            <h2>A few films to start with.</h2>
           </div>
           <p>
-            A few short films to get the party started.
+            Open films and trailers.
             <br />
-            Pick your opening act.
+            Select one for your room.
           </p>
         </div>
         <div className="film-grid">
-          {CATALOG.slice(0, 4).map((film, i) => (
+          {CATALOG.slice(0, 4).map((film) => (
             <button
               key={film.id}
               className={`film-card ${featured.id === film.id ? "selected" : ""}`}
@@ -247,13 +211,7 @@ function Index() {
             >
               <div className="film-image">
                 <img src={film.thumb} alt="" loading="lazy" />
-                <span className="film-tag">
-                  {
-                    ["A little adventure", "A little magic", "A little action", "A quick preview"][
-                      i
-                    ]
-                  }
-                </span>
+                <span className="film-tag">{film.category}</span>
                 <span className="film-launch">
                   <Play size={17} fill="currentColor" />
                 </span>
@@ -273,24 +231,24 @@ function Index() {
       </section>
       <section className="how-section page-width" id="how-it-works">
         <div>
-          <p className="eyebrow">THE GROUP CHAT HAS PLANS NOW</p>
+          <p className="eyebrow">HOW IT WORKS / 03</p>
           <h2>
-            Three steps.
+            A room, a link,
             <br />
-            <em>A whole night together.</em>
+            <em>a shared screen.</em>
           </h2>
           <Link to="/docs" className="text-link">
-            The details behind the sync <ArrowRight size={16} />
+            Read about playback sync <ArrowRight size={16} />
           </Link>
         </div>
         <ol>
           {[
             {
               title: "Make a room",
-              text: "Choose a nickname and your first film. Your space is ready in seconds.",
+              text: "Choose a nickname and your first film. Then create your room.",
             },
             {
-              title: "Bring your people",
+              title: "Share the link",
               text: "Copy the invite link. Friends join from their browser with the room code.",
             },
             {
@@ -309,19 +267,18 @@ function Index() {
         </ol>
       </section>
       <section className="closing page-width">
-        <Clapperboard size={30} />
         <h2>
-          “One more?” hits different
+          Something worth watching?
           <br />
-          when you’re together.
+          Bring someone along.
         </h2>
         <a href="#start" className="action-primary">
-          Make tonight a movie night <ArrowRight size={18} />
+          Start a room <ArrowRight size={18} />
         </a>
       </section>
       <footer className="site-footer page-width">
         <span>
-          watchtogether. <small>Made for nights worth sharing.</small>
+          watchtogether. <small>a project by Parth</small>
         </span>
         <Link to="/docs">
           How sync works <ArrowRight size={14} />
