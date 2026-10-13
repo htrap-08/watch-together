@@ -54,7 +54,9 @@ export class RealtimeChannel {
   private connect() {
     if (this.stopped) return;
     const hostname = location.hostname.includes(":") ? `[${location.hostname}]` : location.hostname;
-    const fallback = `${location.protocol === "https:" ? "wss" : "ws"}://${hostname}:3001`;
+    const fallback = import.meta.env.PROD
+      ? `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/api/realtime`
+      : `${location.protocol === "https:" ? "wss" : "ws"}://${hostname}:3001`;
     const url = new URL(import.meta.env["VITE_REALTIME_URL"] || fallback);
     url.searchParams.set("room", this.room);
     url.searchParams.set("key", this.key);

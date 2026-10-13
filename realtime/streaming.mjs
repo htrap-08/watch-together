@@ -219,5 +219,31 @@ export function createStreamingRooms({ broadcast, send, now = Date.now }) {
     const msg = { ...message, text: message.text.slice(0, 500) };
     if (!room.chat.some((x) => x.id === msg.id)) room.chat = [...room.chat, msg].slice(-150);
   }
-  return { handle, remove, captureChat };
+  // Socket identities are supplied by the shared relay when restoring a room.
+  function restore(code, saved, socketFor) {
+    if (!saved) return;
+    rooms.set(code, {
+      ...saved,
+      members: new Map(
+        saved.members.map(([id, member]) => [
+          id,
+          { ...member, socket: socketFor(member.connection) },
+        ]),
+      ),
+      observers: new Set(saved.observers.map(socketFor)),
+    });
+  }
+  function serialize(code) {
+    const room = rooms.get(code);
+    if (!room) return null;
+    return {
+      ...room,
+      members: [...room.members].map(([id, { socket, ...member }]) => [
+        id,
+        { ...member, connection: socket.connection },
+      ]),
+      observers: [...room.observers].map((socket) => socket.connection),
+    };
+  }
+  return { handle, remove, captureChat, restore, serialize };
 }

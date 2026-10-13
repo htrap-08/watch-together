@@ -11,7 +11,7 @@ export default defineConfig({
     tailwindcss(),
     tanstackStart({ server: { entry: "server" } }),
     react(),
-    nitro({ preset: process.env.VERCEL ? "vercel" : "node-server" }),
+    nitro({ preset: process.env["VERCEL"] ? "vercel" : "node-server" }),
   ],
   resolve: { dedupe: ["react", "react-dom"] },
 });

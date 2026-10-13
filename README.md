@@ -19,6 +19,27 @@ No backend account or API key is required.
 
 ## Production
 
+### Vercel
+
+The checked-in Vercel configuration builds the web app and `/api/realtime`
+WebSocket endpoint together. Connect an Upstash Redis database to the project
+and supply its server-only `REDIS_URL` in production and preview environments.
+The browser and extension use the same deployment's secure WebSocket endpoint.
+Redis shares presence and streaming state between function instances; room
+mutations use a lease and atomic state/event commit to preserve host authority.
+Inactive room records expire after one hour and dead connections after one minute.
+Clients reconnect when a Vercel function reaches its connection duration limit.
+
+```sh
+vercel deploy --prod
+```
+
+Use the free Redis plan with `autoUpgrade=false` to avoid automatic paid upgrades.
+To check cross-instance behavior against a configured database, run
+`node --env-file=.env.local --test realtime/distributed.test.mjs`.
+
+### A dedicated Node server
+
 ```sh
 npm run build
 npm start

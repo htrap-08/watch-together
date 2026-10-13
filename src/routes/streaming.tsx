@@ -146,19 +146,14 @@ function Streaming() {
         </p>
       </section>
       <section className="guide-section">
-        <h2>Hosting the room server.</h2>
+        <h2>Invite your friends.</h2>
         <p>
-          The extension setup contains your room’s realtime server address. For friends outside your
-          LAN, deploy the included server with a public <code>wss://</code> URL and configure the
-          website’s <code>VITE_REALTIME_URL</code> before building. Localhost works only on your own
-          computer.
+          Share your room link. Each friend opens it, copies their extension setup, and connects
+          from their own streaming tab. The setup connects everyone to the same room automatically.
         </p>
         <p>
-          If your server restricts origins, add the installed extension’s{" "}
-          <code>chrome-extension://&lt;extension-id&gt;</code> origin to{" "}
-          <code>REALTIME_ORIGINS</code> alongside your website’s origin. The extension ID is shown
-          on the browser extensions page. Unpacked installs may have different IDs on different
-          computers.
+          Use the public site link when watching with friends on other networks. A localhost link
+          works only on the computer running the app.
         </p>
       </section>
       <section className="guide-section">

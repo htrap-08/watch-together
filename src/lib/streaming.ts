@@ -20,7 +20,9 @@ export function realtimeEndpoint() {
       : location.hostname;
   return (
     import.meta.env["VITE_REALTIME_URL"] ||
-    `${location.protocol === "https:" ? "wss" : "ws"}://${host}:3001`
+    (import.meta.env.PROD
+      ? `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/api/realtime`
+      : `${location.protocol === "https:" ? "wss" : "ws"}://${host}:3001`)
   );
 }
 export function extensionSetup(room: string) {
