@@ -1,17 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowRight, Check, Link2, MessageCircle, Play, Radio, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Check, Play } from "lucide-react";
 import { CATALOG } from "@/lib/catalog";
 import { loadMe, newRoomCode, saveMe } from "@/lib/identity";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Watch Together — Movie night, wherever you are" },
+      { title: "Watch Together — Your own little cinema" },
       {
         name: "description",
         content:
-          "Start a watch room, invite your friends, and enjoy synchronized video, live chat, and a shared queue.",
+          "A screening room for you and your friends. Choose a film, invite your people, and watch in sync.",
       },
     ],
   }),
@@ -20,285 +20,200 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const nav = useNavigate();
+  const nameInput = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
-  const [watchSource, setWatchSource] = useState<"direct" | "stream">("direct");
+  const [source, setSource] = useState<"direct" | "stream">("direct");
   const [mode, setMode] = useState<"create" | "join">("create");
-  const [featured, setFeatured] = useState(CATALOG[1]!);
+  const [film, setFilm] = useState(CATALOG[1]!);
   useEffect(() => setName(loadMe()?.name ?? ""), []);
-  const go = () => {
+  function go() {
     if (!name.trim() || (mode === "join" && code.length !== 6)) return;
     saveMe(name);
-    if (mode === "create" && watchSource === "direct")
-      sessionStorage.setItem("watchparty:first-video", featured.id);
+    if (mode === "create" && source === "direct")
+      sessionStorage.setItem("watchparty:first-video", film.id);
     else sessionStorage.removeItem("watchparty:first-video");
     void nav({
       to: "/room/$code",
-      params: { code: mode === "create" ? newRoomCode() : code.toUpperCase() },
-      search: watchSource === "stream" ? { watch: "stream" } : {},
+      params: { code: mode === "create" ? newRoomCode() : code },
+      search: source === "stream" ? { watch: "stream" } : {},
     });
-  };
+  }
   return (
-    <main className="landing">
-      <header className="site-nav page-width">
-        <Link to="/" className="brand">
-          <span className="brand-mark">
-            <Play size={18} fill="currentColor" />
-          </span>
-          watch<span className="brand-light">together</span>
-          <span className="brand-dot">.</span>
+    <main className="club-site">
+      <header className="club-nav">
+        <Link to="/" className="club-wordmark">
+          watch <em>together</em>
+          <span aria-hidden="true">✳</span>
         </Link>
         <nav aria-label="Main navigation">
-          <a href="#how-it-works">How it works</a>
-          <a href="#discover">Discover</a>
-          <Link to="/streaming">Streaming setup</Link>
-          <a className="nav-cta" href="#start">
-            Let’s watch <ArrowRight size={15} />
-          </a>
+          <a href="#films">The film shelf</a>
+          <Link to="/streaming">Extension & help</Link>
         </nav>
       </header>
-      <section className="hero page-width">
-        <div className="hero-copy">
-          <p className="eyebrow">
-            <span className="live-dot" /> WATCH TOGETHER / ONLINE SCREENING ROOM
-          </p>
-          <h1>
-            movie night,
-            <br />
-            <em>from anywhere.</em>
-          </h1>
-          <p className="hero-description">
-            Pick a film, share your room, and watch it together. Synced playback, a running
-            conversation, and a say in what’s next.
-          </p>
-          <div className="party-form" id="start">
-            <div className="form-tabs" role="tablist" aria-label="Party action">
-              {(["create", "join"] as const).map((m) => (
-                <button
-                  key={m}
-                  role="tab"
-                  aria-selected={mode === m}
-                  className={mode === m ? "active" : ""}
-                  onClick={() => setMode(m)}
-                >
-                  {m === "create" ? "Start a party" : "Join a party"}
-                </button>
-              ))}
-            </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                go();
-              }}
-            >
-              <label htmlFor="watch-source">Where will you watch?</label>
-              <select
-                id="watch-source"
-                value={watchSource}
-                onChange={(event) => setWatchSource(event.target.value as "direct" | "stream")}
-              >
-                <option value="direct">Samples & direct video links</option>
-                <option value="stream">Streaming service · extension required</option>
-              </select>
-              <label htmlFor="display-name">Your nickname</label>
-              <div className="form-row">
-                <input
-                  id="display-name"
-                  placeholder="Your nickname"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={24}
-                  required
-                  autoComplete="nickname"
-                />
-                {mode === "create" && (
-                  <button className="action-primary" type="submit">
-                    Create room <ArrowRight size={17} />
-                  </button>
-                )}
-              </div>
-              {mode === "join" && (
-                <div className="form-row join-row">
-                  <input
-                    aria-label="Room code"
-                    placeholder="6-character room code"
-                    value={code}
-                    onChange={(e) =>
-                      setCode(e.target.value.replace(/[^a-z0-9]/gi, "").toUpperCase())
-                    }
-                    minLength={6}
-                    maxLength={6}
-                    required
-                  />
-                  <button className="action-primary" type="submit">
-                    Join room <ArrowRight size={17} />
-                  </button>
-                </div>
-              )}
-            </form>
+      <section className="club-lobby">
+        <div className="club-feature">
+          <div className="club-intro">
+            <p>A little cinema. Your kind of company.</p>
+            <h1>
+              Make a night <em>of it.</em>
+            </h1>
           </div>
-          <p className="small-note">
-            <Check size={14} />{" "}
-            {watchSource === "stream"
-              ? "Streaming needs the companion extension and service access."
-              : "Sample films need no account or extension."}
-          </p>
-        </div>
-        <div className="hero-visual">
-          <div className="preview-window" aria-label="Illustration of a watch room">
-            <div className="preview-top">
-              <span>SCREEN 01</span>
-              <span>
-                <Radio size={12} /> Room preview
-              </span>
-              <span>•••</span>
-            </div>
-            <div className="preview-picture">
-              <img src={featured.thumb} alt={featured.title} />
-              <div className="preview-shade" />
-              <span className="preview-live">
-                <span className="live-dot" /> IN SYNC
-              </span>
-              <div className="preview-title">
-                <span>TONIGHT’S PICK</span>
-                <h2>{featured.title}</h2>
-                <p>
-                  {featured.genres.slice(0, 2).join(" · ")} / {featured.minutes} min
-                </p>
-              </div>
-              <span className="preview-play">
-                <Play size={24} fill="currentColor" />
-              </span>
-            </div>
-            <div className="preview-bottom">
-              <span>
-                <Play size={12} fill="currentColor" /> 00:12
-              </span>
-              <div className="preview-progress">
-                <i />
-              </div>
-              <span>{featured.minutes}:00</span>
-            </div>
-          </div>
-          <p className="screen-caption">
-            <span>01 /</span> Your film here. Your friends alongside.
-          </p>
-        </div>
-      </section>
-      <section className="promise-strip">
-        <div className="page-width">
-          <span>
-            <Radio size={18} /> Synced playback
-          </span>
-          <span>
-            <MessageCircle size={18} /> Live chat
-          </span>
-          <span>
-            <Users size={18} /> Shared queue & voting
-          </span>
-          <span>
-            <Link2 size={18} /> Invite by link
-          </span>
-        </div>
-      </section>
-      <section className="discovery page-width" id="discover">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">THE SHORTLIST / 02</p>
-            <h2>A few films to start with.</h2>
-          </div>
-          <p>
-            Open films and trailers.
-            <br />
-            Select one for your room.
-          </p>
-        </div>
-        <div className="film-grid">
-          {CATALOG.slice(0, 4).map((film) => (
+          <figure className="club-still">
+            <img src={film.thumb} alt={`Still from ${film.title}`} />
+            <figcaption>
+              <span>On your screen</span>
+              <h2>{film.title}</h2>
+              <p>
+                {film.year} <span>·</span> {film.genres[0]} <span>·</span> {film.minutes} min
+              </p>
+            </figcaption>
             <button
-              key={film.id}
-              className={`film-card ${featured.id === film.id ? "selected" : ""}`}
+              className="club-still-play"
+              aria-label={`Choose ${film.title} for your room`}
               onClick={() => {
-                setFeatured(film);
-                document
-                  .getElementById("start")
-                  ?.scrollIntoView({ behavior: "smooth", block: "center" });
-                document.getElementById("display-name")?.focus({ preventScroll: true });
+                setMode("create");
+                setSource("direct");
+                nameInput.current?.focus();
               }}
             >
-              <div className="film-image">
-                <img src={film.thumb} alt="" loading="lazy" />
-                <span className="film-tag">{film.category}</span>
-                <span className="film-launch">
-                  <Play size={17} fill="currentColor" />
-                </span>
-              </div>
-              <div className="film-info">
-                <h3>{film.title}</h3>
-                <span>
-                  {film.minutes} min <i>·</i> {film.genres[0]}
-                </span>
-              </div>
+              <Play size={20} fill="currentColor" />
+            </button>
+          </figure>
+          <p className="club-feature-caption">Pick something below, or bring your own film.</p>
+        </div>
+        <aside className="club-boxoffice" id="start">
+          <div className="club-form-tabs" role="tablist" aria-label="Room action">
+            <button role="tab" aria-selected={mode === "create"} onClick={() => setMode("create")}>
+              New screening
+            </button>
+            <button role="tab" aria-selected={mode === "join"} onClick={() => setMode("join")}>
+              Join friends
+            </button>
+          </div>
+          <h2>
+            {mode === "create" ? (
+              <>
+                Save your friends <br />a seat.
+              </>
+            ) : (
+              <>
+                Your people <br />
+                are waiting.
+              </>
+            )}
+          </h2>
+          <p className="club-form-intro">
+            {mode === "create"
+              ? "Make a room, send the link. You bring the company; we’ll keep the screens in time."
+              : "Have a room code? Come on in."}
+          </p>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              go();
+            }}
+          >
+            <label htmlFor="display-name">What should we call you?</label>
+            <input
+              ref={nameInput}
+              id="display-name"
+              placeholder="Your nickname"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              required
+              maxLength={24}
+              autoComplete="nickname"
+            />
+            {mode === "join" && (
+              <>
+                <label htmlFor="room-code">Room code</label>
+                <input
+                  id="room-code"
+                  className="club-code-input"
+                  placeholder="ABC123"
+                  value={code}
+                  onChange={(event) =>
+                    setCode(event.target.value.replace(/[^a-z0-9]/gi, "").toUpperCase())
+                  }
+                  minLength={6}
+                  maxLength={6}
+                  required
+                />
+              </>
+            )}
+            <label htmlFor="watch-source">Watching from</label>
+            <select
+              id="watch-source"
+              value={source}
+              onChange={(event) => setSource(event.target.value as "direct" | "stream")}
+            >
+              <option value="direct">Our film shelf / a video link</option>
+              <option value="stream">A streaming service</option>
+            </select>
+            <p className="club-source-note">
+              {source === "stream" ? (
+                <>
+                  You’ll need our <Link to="/streaming">Chrome / Edge extension</Link> and access to
+                  the film.
+                </>
+              ) : (
+                "No account, download or extension needed."
+              )}
+            </p>
+            <button type="submit" className="club-submit">
+              {mode === "create" ? "Open the room" : "Take your seat"}
+              <ArrowRight size={18} />
+            </button>
+          </form>
+          <div className="club-ticket-end">
+            <span>Everyone gets their own screen.</span>
+            <span aria-hidden="true">✳</span>
+          </div>
+        </aside>
+      </section>
+      <section className="club-shelf" id="films">
+        <div className="club-shelf-heading">
+          <h2>On the house.</h2>
+          <p>A few open films & trailers to get you started.</p>
+        </div>
+        <div className="club-film-list">
+          {CATALOG.map((item) => (
+            <button
+              key={item.id}
+              className={`club-film ${item.id === film.id && source === "direct" ? "is-picked" : ""}`}
+              aria-pressed={item.id === film.id && source === "direct"}
+              onClick={() => {
+                setFilm(item);
+                setSource("direct");
+                setMode("create");
+              }}
+            >
+              <img src={item.thumb} alt="" loading="lazy" />
+              <span className="club-film-text">
+                <strong>{item.title}</strong>
+                <small>
+                  {item.category === "Trailers" ? "Trailer" : "Short film"} · {item.year}
+                </small>
+              </span>
+              <span className="club-film-duration">{item.minutes} min</span>
+              <span className="club-film-pick">
+                {item.id === film.id && source === "direct" ? (
+                  <Check size={16} />
+                ) : (
+                  <ArrowRight size={16} />
+                )}
+              </span>
             </button>
           ))}
         </div>
-        <p className="catalog-note">
-          Sample films and videos. You can also share a direct video link inside your room.
+      </section>
+      <footer className="club-footer">
+        <p>
+          Stay for the credits. <span>Watch Together, by Parth.</span>
         </p>
-      </section>
-      <section className="how-section page-width" id="how-it-works">
-        <div>
-          <p className="eyebrow">HOW IT WORKS / 03</p>
-          <h2>
-            A room, a link,
-            <br />
-            <em>a shared screen.</em>
-          </h2>
-          <Link to="/docs" className="text-link">
-            Read about playback sync <ArrowRight size={16} />
-          </Link>
-        </div>
-        <ol>
-          {[
-            {
-              title: "Make a room",
-              text: "Choose a nickname and your first film. Then create your room.",
-            },
-            {
-              title: "Share the link",
-              text: "Copy the invite link. Friends join from their browser with the room code.",
-            },
-            {
-              title: "Press play, together",
-              text: "Playback stays in sync while you chat, react, and vote on what’s next.",
-            },
-          ].map((step, i) => (
-            <li key={step.title}>
-              <span>0{i + 1}</span>
-              <div>
-                <h3>{step.title}</h3>
-                <p>{step.text}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
-      <section className="closing page-width">
-        <h2>
-          Something worth watching?
-          <br />
-          Bring someone along.
-        </h2>
-        <a href="#start" className="action-primary">
-          Start a room <ArrowRight size={18} />
-        </a>
-      </section>
-      <footer className="site-footer page-width">
-        <span>
-          watchtogether. <small>a project by Parth</small>
-        </span>
         <Link to="/docs">
-          How sync works <ArrowRight size={14} />
+          How playback sync works <ArrowRight size={13} />
         </Link>
       </footer>
     </main>

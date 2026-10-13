@@ -1,0 +1,1027 @@
+/* Film club: paper in the lobby, lights down in the screening room. */
+:root {
+  --club-paper: #eeece5;
+  --club-ink: #242823;
+  --club-red: #a43b32;
+  --club-line: #d0d0c5;
+}
+.club-site {
+  min-height: 100vh;
+  background: var(--club-paper);
+  color: var(--club-ink);
+  padding: 0 max(24px, calc((100vw - 1160px) / 2));
+  font-family: Inter, system-ui, sans-serif;
+}
+.club-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  font:
+    26px/1 Georgia,
+    "Times New Roman",
+    serif;
+  letter-spacing: -1px;
+  white-space: nowrap;
+}
+.club-wordmark em {
+  font-weight: normal;
+}
+.club-wordmark > span {
+  margin-left: 8px;
+  color: var(--club-red);
+  font:
+    28px/1 Georgia,
+    serif;
+}
+.club-nav {
+  min-height: 92px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--club-line);
+  gap: 24px;
+}
+.club-nav nav {
+  display: flex;
+  gap: 28px;
+  font-size: 12px;
+}
+.club-nav nav a {
+  text-decoration: underline;
+  text-underline-offset: 5px;
+  text-decoration-color: transparent;
+}
+.club-nav nav a:hover {
+  text-decoration-color: currentColor;
+}
+.club-lobby {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 355px;
+  gap: 58px;
+  padding: 48px 0 42px;
+  align-items: start;
+}
+.club-intro > p {
+  color: #73796f;
+  font-size: 12px;
+  margin: 0 0 12px;
+}
+.club-intro h1 {
+  font:
+    normal clamp(36px, 4.3vw, 57px)/1.1 Georgia,
+    "Times New Roman",
+    serif;
+  letter-spacing: -2px;
+  margin: 0 0 30px;
+}
+.club-intro h1 em {
+  font-weight: normal;
+}
+.club-still {
+  position: relative;
+  aspect-ratio: 16/10;
+  margin: 0;
+  overflow: hidden;
+  background: #111a19;
+}
+.club-still > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 38%;
+}
+.club-still:after {
+  content: "";
+  position: absolute;
+  inset: 35% 0 0;
+  background: linear-gradient(transparent, rgba(9, 15, 13, 0.88));
+  pointer-events: none;
+}
+.club-still figcaption {
+  position: absolute;
+  bottom: 26px;
+  left: 28px;
+  z-index: 1;
+  color: #f5f1e6;
+}
+.club-still figcaption > span {
+  font-size: 10px;
+  color: #c5c8ba;
+}
+.club-still h2 {
+  font:
+    normal 30px/1.2 Georgia,
+    serif;
+  letter-spacing: -0.6px;
+  margin: 7px 0;
+}
+.club-still figcaption p {
+  font-size: 11px;
+  color: #c5c8ba;
+}
+.club-still figcaption p span {
+  padding: 0 5px;
+}
+.club-still-play {
+  position: absolute;
+  right: 27px;
+  bottom: 28px;
+  z-index: 2;
+  border: 1px solid #f5f1e655;
+  color: #f5f1e6;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffffff0d;
+}
+.club-still-play:hover {
+  background: #f5f1e6;
+  color: #242823;
+}
+.club-feature-caption {
+  margin: 12px 0 0;
+  font-size: 11px;
+  color: #777d72;
+}
+.club-boxoffice {
+  background: #26302c;
+  color: #f1eee4;
+  padding: 29px 30px 0;
+  position: relative;
+  margin-top: 3px;
+}
+.club-form-tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid #f1eee425;
+  margin-bottom: 28px;
+}
+.club-form-tabs button {
+  font-size: 12px;
+  padding: 0 0 14px;
+  color: #a4b0a6;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.club-form-tabs button[aria-selected="true"] {
+  color: #f1eee4;
+  border-bottom-color: #f1eee4;
+}
+.club-boxoffice h2 {
+  font:
+    normal 35px/1.13 Georgia,
+    serif;
+  letter-spacing: -1px;
+  margin: 0 0 18px;
+}
+.club-form-intro {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #b3bcb1;
+  margin-bottom: 25px;
+}
+.club-boxoffice label {
+  display: block;
+  font-size: 11px;
+  margin: 18px 0 8px;
+  color: #dedfd4;
+}
+.club-boxoffice input,
+.club-boxoffice select {
+  width: 100%;
+  border: 1px solid #738173;
+  background: #ffffff05;
+  color: #f1eee4;
+  padding: 12px;
+  height: 43px;
+  border-radius: 0;
+  font-size: 12px;
+}
+.club-boxoffice input::placeholder {
+  color: #9aa99a;
+}
+.club-boxoffice select {
+  cursor: pointer;
+}
+.club-boxoffice option {
+  background: #26302c;
+}
+.club-code-input {
+  letter-spacing: 3px;
+  font-family: ui-monospace, monospace;
+}
+.club-source-note {
+  margin: 9px 0 22px;
+  color: #a3afa2;
+  font-size: 10px;
+  line-height: 1.7;
+  min-height: 34px;
+}
+.club-source-note a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.club-submit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 14px 16px;
+  color: #fff5e8;
+  background: var(--club-red);
+  font-size: 12px;
+  border: 1px solid #ba5c4a;
+}
+.club-submit:hover {
+  background: #b14b40;
+}
+.club-ticket-end {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px dashed #f1eee430;
+  margin: 27px -30px 0;
+  padding: 18px 30px;
+  font-size: 10px;
+  color: #9eac9b;
+}
+.club-ticket-end > span:last-child {
+  font-size: 20px;
+  color: #d5d8c5;
+}
+.club-shelf {
+  border-top: 1px solid var(--club-line);
+  padding: 27px 0 33px;
+}
+.club-shelf-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 22px;
+  margin-bottom: 17px;
+}
+.club-shelf-heading h2 {
+  font:
+    normal 26px Georgia,
+    serif;
+  letter-spacing: -0.6px;
+}
+.club-shelf-heading p {
+  font-size: 11px;
+  color: #777d72;
+}
+.club-film-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 40px;
+}
+.club-film {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--club-line);
+  min-width: 0;
+}
+.club-film > img {
+  width: 76px;
+  height: 50px;
+  object-fit: cover;
+  filter: saturate(0.75);
+}
+.club-film-text {
+  flex: 1;
+  min-width: 0;
+}
+.club-film-text strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+.club-film-text small {
+  font-size: 10px;
+  color: #73796f;
+}
+.club-film-duration {
+  font:
+    10px ui-monospace,
+    monospace;
+  color: #777d72;
+  white-space: nowrap;
+}
+.club-film-pick {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  color: #777d72;
+}
+.club-film.is-picked .club-film-pick {
+  border: 1px solid var(--club-red);
+  border-radius: 50%;
+  color: var(--club-red);
+}
+.club-film:hover strong {
+  color: var(--club-red);
+}
+.club-footer {
+  padding: 25px 0 30px;
+  border-top: 1px solid var(--club-line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.club-footer p {
+  font:
+    italic 17px Georgia,
+    serif;
+}
+.club-footer p span {
+  font:
+    10px Inter,
+    system-ui,
+    sans-serif;
+  display: inline-block;
+  margin-left: 16px;
+  color: #73796f;
+}
+.club-footer > a {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #73796f;
+  font-size: 10px;
+}
+.club-site :focus-visible {
+  outline: 2px solid #b7795c;
+  outline-offset: 4px;
+}
+
+.club-room {
+  background: #151b18;
+  color: #dedfd5;
+  max-width: none;
+  min-height: 100vh;
+  padding: 0 max(24px, calc((100vw - 1450px) / 2));
+}
+.club-room .room-header {
+  height: 76px;
+  border-color: #354039;
+  gap: 20px;
+}
+.club-room .club-wordmark {
+  font-size: 25px;
+  color: #edece1;
+}
+.club-room .club-wordmark > span {
+  color: #b87360;
+}
+.club-room .room-code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: #b8c2b5;
+  border-radius: 0;
+  font-size: 11px;
+}
+.club-room .connection {
+  color: #a5b4a3;
+  font-size: 10px;
+}
+.club-room .connection i {
+  background: #8baa85;
+}
+.club-room .connection.offline {
+  color: #e1b985;
+}
+.club-room .action-primary {
+  background: #934035;
+  border-color: #ab5849;
+  border-radius: 2px;
+  color: #fff4e5;
+  box-shadow: none;
+}
+.club-room .action-primary:hover {
+  background: #a14c3f;
+  transform: none;
+}
+.club-room .action-secondary {
+  color: #d9dfd1;
+  background: transparent;
+  border-color: #4f5b4e;
+  border-radius: 2px;
+}
+.club-room .room-layout {
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 30px;
+  padding-top: 25px;
+}
+.club-room .room-title {
+  margin-bottom: 16px;
+}
+.club-room .room-title h1 {
+  font:
+    normal 21px Georgia,
+    serif;
+  color: #edece1;
+  margin: 0;
+  letter-spacing: -0.4px;
+}
+.club-room .room-title > span {
+  font-size: 11px;
+  color: #a1ada0;
+}
+.club-room .watch-mode-tabs {
+  border-bottom: 0;
+  margin-bottom: 17px;
+  padding: 0;
+  gap: 24px;
+}
+.club-room .watch-mode-tabs button {
+  color: #829080;
+  border-bottom: 0;
+  padding: 4px 0;
+  font-size: 11px;
+}
+.club-room .watch-mode-tabs button[aria-selected="true"] {
+  color: #d6dfcc;
+  text-decoration: underline;
+  text-underline-offset: 7px;
+  text-decoration-color: #718768;
+}
+.club-room .player-screen {
+  border: 0;
+  border-radius: 0;
+  background: #070a08;
+}
+.club-room .player-badge {
+  display: none;
+}
+.club-room .player-controls {
+  border-radius: 0;
+  background: #1c251e;
+  border: 0;
+  padding: 14px 15px 11px;
+}
+.club-room .player-controls button {
+  color: #c4cdbd;
+}
+.club-room .play-control {
+  background: #d2d9c8;
+  color: #1c251e !important;
+  border-radius: 2px;
+}
+.club-room .video-progress {
+  accent-color: #b8c7a7;
+}
+.club-room .now-watching {
+  padding: 22px 0 24px;
+  border-color: #354039;
+  align-items: center;
+}
+.club-room .now-watching .eyebrow {
+  display: none;
+}
+.club-room .now-watching h2 {
+  font:
+    normal 28px Georgia,
+    serif;
+  color: #ecebe0;
+  margin: 0 0 7px;
+}
+.club-room .now-watching p:not(.eyebrow) {
+  font-size: 11px;
+  color: #8f9d8b;
+}
+.club-room .reactions {
+  gap: 6px;
+}
+.club-room .reactions button {
+  background: transparent;
+  border-color: transparent;
+  border-radius: 0;
+  font-size: 18px;
+  width: 31px;
+  height: 33px;
+}
+.club-room .reactions button:hover {
+  background: #2a352b;
+}
+.club-room .room-library {
+  border-top: 1px solid #354039;
+  margin-top: 0;
+}
+.club-room .room-library > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 21px 0;
+  color: #b7c2ae;
+  font-size: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.club-room .room-library > summary::-webkit-details-marker {
+  display: none;
+}
+.club-room .room-library[open] > summary svg {
+  transform: rotate(45deg);
+}
+.club-room .room-discovery {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 4px;
+}
+.club-room .discovery-heading h2 {
+  font:
+    normal 23px Georgia,
+    serif;
+}
+.club-room .party-sidebar {
+  border-radius: 0;
+  border: 0;
+  border-left: 1px solid #354039;
+  background: transparent;
+  margin-top: 0;
+  top: 20px;
+  height: 660px;
+  min-height: 520px;
+  max-height: calc(100vh - 105px);
+  padding-left: 22px;
+}
+.club-room .sidebar-heading {
+  padding: 1px 0 22px;
+}
+.club-room .sidebar-heading > span:first-child {
+  font:
+    normal 20px Georgia,
+    serif;
+  color: #edece1;
+  letter-spacing: -0.3px;
+}
+.club-room .sidebar-heading > span:last-child {
+  font-size: 10px;
+  color: #8a9e83;
+}
+.club-room .sidebar-tabs {
+  padding: 0;
+  gap: 20px;
+  justify-content: space-between;
+  border-top: 0;
+  border-color: #354039;
+}
+.club-room .sidebar-tabs > button {
+  flex: 0 1 auto;
+  display: block;
+  font-size: 11px;
+  padding: 0 0 13px;
+  color: #8f9d8b;
+  border-bottom: 1px solid transparent;
+}
+.club-room .sidebar-tabs > button.active {
+  border-color: #c3ceb7;
+  color: #e0e4d6;
+}
+.club-room .sidebar-tabs small {
+  position: static;
+  margin-left: 4px;
+  border-radius: 0;
+  background: transparent;
+  color: #e0e4d6;
+  font-size: 9px;
+}
+.club-room .chat-feed {
+  padding: 25px 0;
+  min-height: 200px;
+  scrollbar-color: #4c5e48 transparent;
+}
+.club-room .chat-welcome {
+  padding: 12px 0 22px;
+  text-align: left;
+}
+.club-room .chat-welcome h3 {
+  font:
+    italic 24px/1.4 Georgia,
+    serif;
+  color: #b2bda7;
+  margin-top: 0;
+}
+.club-room .chat-welcome p {
+  font-size: 11px;
+  color: #7b8b75;
+}
+.club-room .system-message {
+  text-align: left;
+  color: #71836b;
+  font-size: 10px;
+}
+.club-room .chat-message p {
+  background: transparent;
+  padding: 4px 0;
+  font-size: 12px;
+  border-radius: 0;
+  color: #d1d9c6;
+}
+.club-room .chat-message.mine p {
+  background: transparent;
+}
+.club-room .message-meta b {
+  color: #bac8ad;
+  font-size: 11px;
+}
+.club-room .message-meta time {
+  color: #71836b;
+  font-size: 9px;
+}
+.club-room .user-avatar {
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  font-size: 10px;
+}
+.club-room .chat-compose {
+  padding: 12px 0 0;
+  border-color: #354039;
+}
+.club-room .chat-compose input {
+  background: #202b21;
+  border: 1px solid #3b4a37;
+  border-radius: 2px;
+  color: #e0e4d6;
+  font-size: 11px;
+}
+.club-room .chat-compose > button {
+  background: #56694b;
+  color: #e0e4d6;
+  border-radius: 2px;
+}
+.club-room .chat-footnote {
+  padding: 14px 0 0;
+  text-align: left;
+  font-size: 10px;
+  color: #71836b;
+}
+.club-room .sidebar-content {
+  padding: 23px 0;
+}
+.club-room .sidebar-content > h3 {
+  font:
+    normal 23px Georgia,
+    serif;
+}
+.club-room .sidebar-empty {
+  background: transparent;
+  border: 0;
+  padding: 25px 0;
+}
+.club-room .sidebar-empty h4 {
+  font:
+    italic 20px Georgia,
+    serif;
+}
+.club-room .room-footer {
+  border-color: #354039;
+  padding: 25px 0;
+  margin-top: 24px;
+  font-size: 10px;
+  color: #8d9c85;
+}
+.club-room .room-footer a {
+  color: #8d9c85;
+}
+.club-room input,
+.club-room textarea,
+.club-room select {
+  color: #d1d9c6;
+}
+.club-room .room-film {
+  background: transparent;
+}
+.club-room .room-film-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.club-room .room-film-image {
+  border-radius: 0;
+}
+.club-room .room-film-copy {
+  padding: 12px 0;
+}
+.club-room .room-film h3 {
+  font-size: 12px;
+}
+.club-room .category-tabs button.active {
+  background: #3b4a37;
+  border-color: #5e7254;
+  color: #dde4d2;
+}
+.club-room .streaming-panel {
+  background: #1c251e;
+  border: 1px solid #354039;
+  border-radius: 0;
+  padding: 30px;
+}
+.club-room .streaming-heading > svg,
+.club-room .streaming-heading .eyebrow {
+  display: none;
+}
+.club-room .streaming-heading h2 {
+  font:
+    normal 30px Georgia,
+    serif;
+  color: #edece1;
+}
+.club-room .streaming-intro {
+  color: #a6b29c;
+  font-size: 12px;
+}
+.club-room .streaming-steps {
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+.club-room .streaming-steps > div {
+  border-bottom: 1px solid #354039;
+  padding-bottom: 20px;
+}
+.club-room .streaming-steps > div:last-child {
+  border: 0;
+  padding: 0;
+}
+.club-room .streaming-steps > div > span {
+  display: none;
+}
+.club-room .streaming-steps h3 {
+  font-size: 13px;
+  margin-top: 0;
+  color: #d2dbc6;
+}
+.club-room .streaming-steps p {
+  color: #a6b29c;
+  font-size: 12px;
+}
+.club-room .streaming-session {
+  background: #151b18;
+  border-color: #354039;
+  border-radius: 0;
+}
+.club-room .streaming-limit {
+  color: #8f9d8b;
+}
+.club-join {
+  background: var(--club-paper);
+}
+.club-join .join-card {
+  background: #f5f3ec;
+  border-color: var(--club-line);
+  border-radius: 0;
+  box-shadow: none;
+}
+.club-join .join-card h1 {
+  font:
+    normal 38px Georgia,
+    serif;
+}
+.club-join .join-icon {
+  display: none;
+}
+.club-join .action-primary {
+  background: var(--club-red);
+  border-color: var(--club-red);
+}
+.streaming-guide .brand {
+  font-family: Georgia, serif;
+  font-weight: normal;
+  color: var(--club-ink);
+}
+.streaming-guide .brand-mark {
+  display: none;
+}
+.streaming-guide .guide-hero h1,
+.streaming-guide .guide-section h2 {
+  font-family: Georgia, serif;
+  font-weight: normal;
+}
+.streaming-guide .guide-hero > .eyebrow {
+  display: none;
+}
+.streaming-guide .action-primary {
+  background: var(--club-red);
+  border-color: var(--club-red);
+}
+
+@media (min-width: 1450px) {
+  .club-room .room-layout {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+}
+@media (max-width: 1000px) {
+  .club-lobby {
+    gap: 30px;
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+  .club-intro h1 {
+    font-size: 43px;
+  }
+  .club-still {
+    aspect-ratio: 4/3;
+  }
+  .club-boxoffice {
+    padding: 24px 24px 0;
+  }
+  .club-ticket-end {
+    margin-left: -24px;
+    margin-right: -24px;
+    padding: 18px 24px;
+  }
+  .club-room .room-layout {
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 22px;
+  }
+  .club-room .party-sidebar {
+    padding-left: 18px;
+  }
+}
+@media (max-width: 760px) {
+  .club-site {
+    padding: 0 22px;
+  }
+  .club-nav {
+    min-height: 76px;
+  }
+  .club-nav nav {
+    gap: 16px;
+    font-size: 10px;
+  }
+  .club-wordmark {
+    font-size: 23px;
+  }
+  .club-lobby {
+    grid-template-columns: 1fr;
+    padding: 30px 0;
+    gap: 25px;
+  }
+  .club-intro h1 {
+    font-size: 44px;
+    margin-bottom: 23px;
+  }
+  .club-still {
+    aspect-ratio: 16/9;
+  }
+  .club-still h2 {
+    font-size: 25px;
+  }
+  .club-boxoffice {
+    margin-top: 0;
+  }
+  .club-boxoffice h2 br {
+    display: none;
+  }
+  .club-boxoffice h2 {
+    font-size: 31px;
+  }
+  .club-form-intro {
+    margin-bottom: 18px;
+  }
+  .club-film-list {
+    grid-template-columns: 1fr;
+  }
+  .club-shelf-heading {
+    display: block;
+  }
+  .club-shelf-heading p {
+    margin-top: 7px;
+  }
+  .club-footer {
+    align-items: start;
+  }
+  .club-footer p span {
+    display: block;
+    margin: 6px 0 0;
+  }
+  .club-footer > a {
+    max-width: 110px;
+    line-height: 1.7;
+  }
+  .club-room {
+    padding: 0 16px;
+  }
+  .club-room .room-header {
+    height: 68px;
+    gap: 12px;
+  }
+  .club-room .club-wordmark {
+    font-size: 21px;
+  }
+  .club-room .club-wordmark > span {
+    display: none;
+  }
+  .club-room .room-header-info {
+    gap: 8px;
+  }
+  .club-room .room-header-info .connection {
+    display: none;
+  }
+  .club-room .invite-button {
+    padding: 9px 11px;
+    font-size: 10px;
+  }
+  .club-room .room-code {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  .club-room .room-layout {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    padding-top: 21px;
+  }
+  .club-room .room-title h1 {
+    font-size: 21px;
+  }
+  .club-room .now-watching {
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 19px 0;
+  }
+  .club-room .now-watching h2 {
+    font-size: 25px;
+  }
+  .club-room .party-sidebar {
+    position: static;
+    border-left: 0;
+    border-top: 1px solid #354039;
+    padding: 22px 0 0;
+    min-height: 410px;
+    height: 470px;
+    max-height: none;
+  }
+  .club-room .sidebar-heading {
+    padding-bottom: 22px;
+  }
+  .club-room .sidebar-tabs {
+    justify-content: start;
+    gap: 30px;
+  }
+  .club-room .player-controls {
+    padding: 10px;
+  }
+  .club-room .streaming-panel {
+    padding: 20px;
+  }
+  .club-room .room-film-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .club-site *,
+  .club-room * {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+.club-still > img {
+  transform: scale(1.16);
+}
+.club-room .player-screen {
+  max-height: 60vh;
+}
+.club-room .chat-compose {
+  background: transparent;
+  margin: 0;
+  padding: 14px 0 0;
+  border: 0;
+  border-top: 1px solid #354039;
+  border-radius: 0;
+  gap: 8px;
+}
+.club-room .chat-compose input {
+  outline: revert !important;
+}
+.club-room .control-row > .countdown-control {
+  background: transparent;
+  border: 1px solid #3b4a37;
+  border-radius: 2px;
+}
+.club-room .player-empty h2 {
+  font-family: Georgia, serif;
+  font-weight: normal;
+}
+@media (max-width: 760px) {
+  .club-room .player-screen {
+    max-height: none;
+  }
+}
+@media (max-width: 500px) {
+  .club-nav nav a:first-child {
+    display: none;
+  }
+}
+.club-room .chat-message p,
+.club-room .chat-message.mine p {
+  border: 0;
+  box-shadow: none;
+}

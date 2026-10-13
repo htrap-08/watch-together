@@ -157,7 +157,7 @@ function Room() {
   };
   if (!me)
     return (
-      <main className="join-page">
+      <main className="join-page club-join">
         <Link to="/" className="brand">
           <span className="brand-mark">
             <Play size={18} fill="currentColor" />
@@ -174,8 +174,7 @@ function Room() {
           <span className="join-icon">
             <Users size={28} />
           </span>
-          <p className="eyebrow">THERE’S A SEAT FOR YOU</p>
-          <h1>Join the movie night.</h1>
+          <h1>Take your seat.</h1>
           <p>
             You’re joining room <b>{code}</b>. Pick a nickname so your friends know it’s you.
           </p>
@@ -215,13 +214,11 @@ function Room() {
     3,
   );
   return (
-    <main className="room-page">
+    <main className="room-page club-room">
       <header className="room-header">
-        <Link to="/" className="brand">
-          <span className="brand-mark">
-            <Play size={18} fill="currentColor" />
-          </span>
-          watch<span className="brand-light">together</span>.
+        <Link to="/" className="club-wordmark">
+          watch <em>together</em>
+          <span aria-hidden="true">✳</span>
         </Link>
         <div className="room-header-info">
           <span className={`connection ${connected ? "" : "offline"}`}>
@@ -243,8 +240,7 @@ function Room() {
         <section className="watch-column">
           <div className="room-title">
             <div>
-              <p className="eyebrow">WATCH TOGETHER / SCREENING ROOM</p>
-              <h1>Movie night</h1>
+              <h1>The screening room</h1>
             </div>
             <span>
               <Users size={16} /> {room.members.length}{" "}
@@ -297,10 +293,18 @@ function Room() {
                     <span>
                       <Film size={34} />
                     </span>
-                    <h2>The night starts here.</h2>
+                    <h2>What are we watching?</h2>
                     <p>Choose a film below or add a direct video link.</p>
-                    <a href="#room-discover" className="action-primary">
-                      Find something to watch <ChevronRight size={17} />
+                    <a
+                      href="#room-discover"
+                      className="action-primary"
+                      onClick={() =>
+                        document
+                          .querySelector<HTMLDetailsElement>(".room-library")
+                          ?.setAttribute("open", "")
+                      }
+                    >
+                      Browse the film shelf <ChevronRight size={17} />
                     </a>
                   </div>
                 )}
@@ -449,114 +453,116 @@ function Room() {
                   to the queue.
                 </p>
               )}
-              <section className="room-discovery" id="room-discover">
-                <div className="discovery-heading">
-                  <div>
-                    <p className="eyebrow">THE SHORTLIST</p>
-                    <h2>Find your next watch</h2>
+              <details className="room-library" id="room-discover">
+                <summary>
+                  Browse films & add a video <Plus size={16} />
+                </summary>
+                <section className="room-discovery">
+                  <div className="discovery-heading">
+                    <div>
+                      <h2>The film shelf</h2>
+                    </div>
+                    <label className="search-field">
+                      <Search size={16} />
+                      <input
+                        aria-label="Search films"
+                        placeholder="Search films, genres…"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                      />
+                    </label>
                   </div>
-                  <label className="search-field">
-                    <Search size={16} />
-                    <input
-                      aria-label="Search films"
-                      placeholder="Search films, genres…"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                    />
-                  </label>
-                </div>
-                <div className="category-tabs" aria-label="Film category">
-                  {["All films", ...CATEGORIES].map((c) => (
-                    <button
-                      key={c}
-                      aria-pressed={c === category}
-                      className={category === c ? "active" : ""}
-                      onClick={() => setCategory(c)}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-                <div className="room-film-grid">
-                  {films.map(({ film }) => (
-                    <article className="room-film" key={film.id}>
-                      <div className="room-film-image">
-                        <img src={film.thumb} alt="" loading="lazy" />
-                        <span>{film.minutes} min</span>
-                        <button
-                          disabled={!connected || !room.canControl}
-                          className="film-play"
-                          aria-label={`Play ${film.title}`}
-                          onClick={() => room.api.load(film.id)}
-                        >
-                          <Play size={18} fill="currentColor" />
-                        </button>
-                      </div>
-                      <div className="room-film-copy">
-                        <div>
-                          <h3>{film.title}</h3>
-                          <p>{film.genres.slice(0, 2).join(" · ")}</p>
+                  <div className="category-tabs" aria-label="Film category">
+                    {["All films", ...CATEGORIES].map((c) => (
+                      <button
+                        key={c}
+                        aria-pressed={c === category}
+                        className={category === c ? "active" : ""}
+                        onClick={() => setCategory(c)}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="room-film-grid">
+                    {films.map(({ film }) => (
+                      <article className="room-film" key={film.id}>
+                        <div className="room-film-image">
+                          <img src={film.thumb} alt="" loading="lazy" />
+                          <span>{film.minutes} min</span>
+                          <button
+                            disabled={!connected || !room.canControl}
+                            className="film-play"
+                            aria-label={`Play ${film.title}`}
+                            onClick={() => room.api.load(film.id)}
+                          >
+                            <Play size={18} fill="currentColor" />
+                          </button>
                         </div>
-                        <button
-                          disabled={!connected}
-                          aria-label={`Queue ${film.title}`}
-                          onClick={() => {
-                            room.api.enqueue(film.id);
-                            setNotice(`${film.title} added to the queue`);
-                          }}
-                        >
-                          <Plus size={18} />
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-                {!films.length && (
-                  <p className="empty-results">No films found. Try another title or category.</p>
-                )}
-                <form
-                  className="video-link-form"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    try {
-                      const url = new URL(mediaUrl);
-                      if (!["http:", "https:"].includes(url.protocol)) throw new Error();
-                      room.api.enqueue(url.href);
-                      setMediaUrl("");
-                      setTab("queue");
-                      setNotice("Video link added to the queue.");
-                    } catch {
-                      setNotice("Enter a complete HTTP or HTTPS video URL.");
-                    }
-                  }}
-                >
-                  <div>
-                    <b>Bring your own video</b>
-                    <p>Direct MP4 or WebM links work here. Streaming-service page links don’t.</p>
+                        <div className="room-film-copy">
+                          <div>
+                            <h3>{film.title}</h3>
+                            <p>{film.genres.slice(0, 2).join(" · ")}</p>
+                          </div>
+                          <button
+                            disabled={!connected}
+                            aria-label={`Queue ${film.title}`}
+                            onClick={() => {
+                              room.api.enqueue(film.id);
+                              setNotice(`${film.title} added to the queue`);
+                            }}
+                          >
+                            <Plus size={18} />
+                          </button>
+                        </div>
+                      </article>
+                    ))}
                   </div>
-                  <div>
-                    <input
-                      type="url"
-                      aria-label="Direct video URL"
-                      placeholder="https://…/video.mp4"
-                      value={mediaUrl}
-                      onChange={(e) => setMediaUrl(e.target.value)}
-                      required
-                    />
-                    <button className="action-secondary" disabled={!connected} type="submit">
-                      <Plus size={16} /> Add
-                    </button>
-                  </div>
-                </form>
-              </section>
+                  {!films.length && (
+                    <p className="empty-results">No films found. Try another title or category.</p>
+                  )}
+                  <form
+                    className="video-link-form"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      try {
+                        const url = new URL(mediaUrl);
+                        if (!["http:", "https:"].includes(url.protocol)) throw new Error();
+                        room.api.enqueue(url.href);
+                        setMediaUrl("");
+                        setTab("queue");
+                        setNotice("Video link added to the queue.");
+                      } catch {
+                        setNotice("Enter a complete HTTP or HTTPS video URL.");
+                      }
+                    }}
+                  >
+                    <div>
+                      <b>Bring your own video</b>
+                      <p>Direct MP4 or WebM links work here. Streaming-service page links don’t.</p>
+                    </div>
+                    <div>
+                      <input
+                        type="url"
+                        aria-label="Direct video URL"
+                        placeholder="https://…/video.mp4"
+                        value={mediaUrl}
+                        onChange={(e) => setMediaUrl(e.target.value)}
+                        required
+                      />
+                      <button className="action-secondary" disabled={!connected} type="submit">
+                        <Plus size={16} /> Add
+                      </button>
+                    </div>
+                  </form>
+                </section>
+              </details>
             </>
           )}
         </section>
         <aside className="party-sidebar">
           <div className="sidebar-heading">
-            <span>
-              <span className="live-dot" /> THE PARTY
-            </span>
+            <span>Your company</span>
             <span>{room.members.length} online</span>
           </div>
           <div className="sidebar-tabs" role="tablist" aria-label="Room sidebar">
@@ -567,7 +573,7 @@ function Room() {
                 { key: "people", icon: Users, label: "People" },
                 { key: "poll", icon: Vote, label: "Poll" },
               ] as const
-            ).map(({ key, icon: Icon, label }) => (
+            ).map(({ key, label }) => (
               <button
                 role="tab"
                 aria-selected={tab === key}
@@ -575,7 +581,6 @@ function Room() {
                 className={tab === key ? "active" : ""}
                 onClick={() => setTab(key)}
               >
-                <Icon size={16} />
                 {label}
                 {key === "queue" && s.queue.length > 0 && <small>{s.queue.length}</small>}
               </button>
@@ -584,11 +589,12 @@ function Room() {
           {tab === "chat" && (
             <>
               <div className="chat-feed">
-                <div className="chat-welcome">
-                  <span>🍿</span>
-                  <h3>The conversation starts here.</h3>
-                  <p>Say hello to the room.</p>
-                </div>
+                {s.chat.every((message) => message.system) && (
+                  <div className="chat-welcome">
+                    <h3>The lights are down.</h3>
+                    <p>Say hello while everyone settles in.</p>
+                  </div>
+                )}
                 {s.chat.map((msg) =>
                   msg.system ? (
                     <p key={msg.id} className="system-message">
