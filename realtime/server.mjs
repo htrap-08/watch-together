@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
 import { randomUUID } from "node:crypto";
 import { WebSocket, WebSocketServer } from "ws";
+import { createStreamingRooms } from "./streaming.mjs";
 
 export function createRealtimeServer({ origins = [] } = {}) {
   const rooms = new Map();
@@ -33,6 +34,10 @@ export function createRealtimeServer({ origins = [] } = {}) {
   const broadcast = (members, message, except) => {
     for (const member of members) if (member !== except) send(member, message);
   };
+  const streaming = createStreamingRooms({
+    send,
+    broadcast: (code, message) => broadcast(rooms.get(code) ?? [], message),
+  });
   const sync = (members) => {
     const state = Object.create(null);
     for (const member of members) {
@@ -45,12 +50,23 @@ export function createRealtimeServer({ origins = [] } = {}) {
     rooms.set(room, members);
     members.add(ws);
     ws.key = key;
+    ws.room = room;
+    ws.messageCount = 0;
+    ws.messageWindow = Date.now();
     ws.alive = true;
     ws.on("pong", () => {
       ws.alive = true;
     });
     ws.on("error", () => ws.terminate());
     ws.on("message", (data) => {
+      if (Date.now() - ws.messageWindow > 1000) {
+        ws.messageWindow = Date.now();
+        ws.messageCount = 0;
+      }
+      if (++ws.messageCount > 60) {
+        ws.close(1008, "Message rate exceeded");
+        return;
+      }
       let message;
       try {
         message = JSON.parse(data.toString());
@@ -64,6 +80,7 @@ export function createRealtimeServer({ origins = [] } = {}) {
         Array.isArray(message.payload)
       )
         return;
+      if (streaming.handle(ws, message)) return;
       if (message.type === "track") {
         const joining = !ws.presence;
         ws.presence = {
@@ -74,11 +91,13 @@ export function createRealtimeServer({ origins = [] } = {}) {
         if (joining) broadcast(members, { type: "join", newPresences: [ws.presence] });
         sync(members);
       } else if (message.type === "broadcast") {
+        if (message.payload.type === "chat") streaming.captureChat(room, message.payload.msg);
         broadcast(members, { type: "broadcast", payload: { ...message.payload, from: key } }, ws);
       }
     });
     ws.on("close", () => {
       members.delete(ws);
+      streaming.remove(ws);
       if (ws.presence) broadcast(members, { type: "leave", leftPresences: [ws.presence] });
       sync(members);
       if (!members.size) rooms.delete(room);

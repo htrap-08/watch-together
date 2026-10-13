@@ -22,16 +22,20 @@ function Index() {
   const nav = useNavigate();
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
+  const [watchSource, setWatchSource] = useState<"direct" | "stream">("direct");
   const [mode, setMode] = useState<"create" | "join">("create");
   const [featured, setFeatured] = useState(CATALOG[1]!);
   useEffect(() => setName(loadMe()?.name ?? ""), []);
   const go = () => {
     if (!name.trim() || (mode === "join" && code.length !== 6)) return;
     saveMe(name);
-    if (mode === "create") sessionStorage.setItem("watchparty:first-video", featured.id);
+    if (mode === "create" && watchSource === "direct")
+      sessionStorage.setItem("watchparty:first-video", featured.id);
+    else sessionStorage.removeItem("watchparty:first-video");
     void nav({
       to: "/room/$code",
       params: { code: mode === "create" ? newRoomCode() : code.toUpperCase() },
+      search: watchSource === "stream" ? { watch: "stream" } : {},
     });
   };
   return (
@@ -47,6 +51,7 @@ function Index() {
         <nav aria-label="Main navigation">
           <a href="#how-it-works">How it works</a>
           <a href="#discover">Discover</a>
+          <Link to="/streaming">Streaming setup</Link>
           <a className="nav-cta" href="#start">
             Let’s watch <ArrowRight size={15} />
           </a>
@@ -86,6 +91,15 @@ function Index() {
                 go();
               }}
             >
+              <label htmlFor="watch-source">Where will you watch?</label>
+              <select
+                id="watch-source"
+                value={watchSource}
+                onChange={(event) => setWatchSource(event.target.value as "direct" | "stream")}
+              >
+                <option value="direct">Samples & direct video links</option>
+                <option value="stream">Streaming service · extension required</option>
+              </select>
               <label htmlFor="display-name">Your nickname</label>
               <div className="form-row">
                 <input
@@ -124,7 +138,10 @@ function Index() {
             </form>
           </div>
           <p className="small-note">
-            <Check size={14} /> No account or extension needed.
+            <Check size={14} />{" "}
+            {watchSource === "stream"
+              ? "Streaming needs the companion extension and service access."
+              : "Sample films need no account or extension."}
           </p>
         </div>
         <div className="hero-visual">

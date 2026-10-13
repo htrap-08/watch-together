@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -30,8 +30,11 @@ import { fuzzyScore } from "@/lib/fuzzy";
 import { loadMe, saveMe } from "@/lib/identity";
 import { useRoom, type Me } from "@/lib/room-engine";
 import { correctionFor, expectedPosition, shouldBePlaying } from "@/lib/sync";
+import { StreamingPanel } from "@/components/streaming-panel";
 
 export const Route = createFileRoute("/room/$code")({
+  validateSearch: (search): { watch?: "stream" } =>
+    search["watch"] === "stream" ? { watch: "stream" } : {},
   head: ({ params }) => ({
     meta: [
       { title: `Room ${params.code} — Watch Together` },
@@ -48,6 +51,17 @@ const formatTime = (seconds: number) =>
 
 function Room() {
   const { code } = Route.useParams();
+  const { watch } = Route.useSearch();
+  const nav = useNavigate();
+  const watchMode = watch === "stream" ? "stream" : "direct";
+  const setWatchMode = (mode: "direct" | "stream") => {
+    void nav({
+      to: "/room/$code",
+      params: { code },
+      search: mode === "stream" ? { watch: "stream" } : {},
+      replace: true,
+    });
+  };
   const [me, setMe] = useState<Me | null>(null);
   const [name, setName] = useState("");
   useEffect(() => setMe(loadMe()), []);
@@ -71,17 +85,27 @@ function Room() {
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState("");
   const movie = resolveVideo(room.state.playback.videoId);
+  useEffect(() => {
+    const element = v.current;
+    return () => {
+      element?.pause();
+    };
+  }, [watchMode]);
 
   useEffect(() => {
-    if (!room.ready || !room.isHost || initialLoaded.current) return;
+    if (watchMode === "stream" || !room.ready || !room.isHost || initialLoaded.current) return;
     initialLoaded.current = true;
     if (room.state.playback.videoId) return;
     const first = sessionStorage.getItem("watchparty:first-video");
     sessionStorage.removeItem("watchparty:first-video");
     if (first && CATALOG.some((film) => film.id === first)) room.api.load(first);
-  }, [room.ready, room.isHost, room.state.playback.videoId, room.api]);
+  }, [room.ready, room.isHost, room.state.playback.videoId, room.api, watchMode]);
 
   useEffect(() => {
+    if (watchMode === "stream") {
+      v.current?.pause();
+      return;
+    }
     const id = setInterval(() => {
       const el = v.current;
       const pb = room.state.playback;
@@ -121,7 +145,10 @@ function Room() {
 
   const invite = async () => {
     try {
-      await navigator.clipboard.writeText(location.href);
+      const inviteUrl = new URL(location.href);
+      if (watchMode === "stream") inviteUrl.searchParams.set("watch", "stream");
+      else inviteUrl.searchParams.delete("watch");
+      await navigator.clipboard.writeText(inviteUrl.href);
       setCopied(true);
       setNotice("Invite link copied. Send it to your friends.");
     } catch {
@@ -220,285 +247,310 @@ function Room() {
               <h1>Movie night</h1>
             </div>
             <span>
-              <Users size={16} /> {room.members.length} watching
+              <Users size={16} /> {room.members.length}{" "}
+              {watchMode === "stream" ? "here" : "watching"}
             </span>
           </div>
-          <div ref={screen} className="player-screen">
-            <video
-              ref={v}
-              playsInline
-              poster={movie?.thumb || undefined}
-              onTimeUpdate={() => setTime(v.current?.currentTime ?? 0)}
-              onDurationChange={() =>
-                setDuration(Number.isFinite(v.current?.duration) ? v.current!.duration : 0)
-              }
-              onError={() =>
-                setMediaError("This video couldn’t load. Try another film or check the video link.")
-              }
-              onEnded={() => {
-                if (room.canControl) {
-                  room.api.pause();
-                  if (s.queue.length) room.api.playNext();
-                }
-              }}
-            />
-            {!movie && (
-              <div className="player-empty">
-                <span>
-                  <Film size={34} />
-                </span>
-                <h2>The night starts here.</h2>
-                <p>Choose a film below or add a direct video link.</p>
-                <a href="#room-discover" className="action-primary">
-                  Find something to watch <ChevronRight size={17} />
-                </a>
-              </div>
-            )}
-            {movie && (
-              <span className="player-badge">
-                <Radio size={12} /> Shared playback
-              </span>
-            )}
-            {mediaError && (
-              <div className="player-message" role="alert">
-                <p>{mediaError}</p>
-                <button
-                  onClick={() => {
-                    v.current?.load();
-                    setMediaError("");
-                  }}
-                  className="action-secondary"
-                >
-                  Retry video
-                </button>
-              </div>
-            )}
-            {needsPlay && !mediaError && (
-              <button
-                className="enable-play"
-                onClick={() => {
-                  void v.current
-                    ?.play()
-                    .then(() => setNeedsPlay(false))
-                    .catch(() =>
-                      setNotice("Your browser blocked playback. Try the play button again."),
-                    );
-                }}
-              >
-                <Play size={25} fill="currentColor" /> Click to enable playback
-              </button>
-            )}
-            {room.floats.map((f) => (
-              <span
-                key={f.id}
-                className="floating-reaction animate-float-up"
-                style={{ left: `${f.x}%` }}
-              >
-                {f.emoji}
-              </span>
-            ))}
-          </div>
-          <div className="player-controls">
-            <div className="control-row">
-              <button
-                className="play-control"
-                aria-label={s.playback.playing ? "Pause for everyone" : "Play for everyone"}
-                disabled={!controls}
-                onClick={() => (s.playback.playing ? room.api.pause() : room.api.play())}
-              >
-                {s.playback.playing ? (
-                  <Pause size={18} fill="currentColor" />
-                ) : (
-                  <Play size={18} fill="currentColor" />
-                )}
-              </button>
-              <button
-                className="time-jump"
-                disabled={!controls}
-                onClick={() => room.api.seek(Math.max(0, time - 10))}
-              >
-                −10
-              </button>
-              <button
-                className="time-jump"
-                disabled={!controls}
-                onClick={() => room.api.seek(time + 10)}
-              >
-                +10
-              </button>
-              <span className="time-label">
-                {formatTime(time)} <i>/ {formatTime(duration)}</i>
-              </span>
-              <div className="control-spacer" />
-              <button
-                className="countdown-control"
-                disabled={!controls}
-                onClick={() => room.api.countdownPlay()}
-              >
-                3 · 2 · 1 start
-              </button>
-              <button
-                aria-label={muted ? "Unmute" : "Mute"}
-                onClick={() => {
-                  const next = !muted;
-                  setMuted(next);
-                  if (v.current) v.current.muted = next;
-                }}
-              >
-                {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-              </button>
-              <button
-                aria-label="Full screen"
-                onClick={() => {
-                  void screen.current
-                    ?.requestFullscreen()
-                    .catch(() => setNotice("Full screen is unavailable in this browser."));
-                }}
-              >
-                <Expand size={18} />
-              </button>
-            </div>
-            <input
-              className="video-progress"
-              type="range"
-              aria-label="Seek for everyone"
-              min={0}
-              max={duration || 1}
-              step={0.1}
-              value={Math.min(time, duration || 1)}
-              disabled={!controls || !duration}
-              onChange={(e) => room.api.seek(Number(e.target.value))}
-            />
-          </div>
-          <div className="now-watching">
-            <div>
-              <p className="eyebrow">{movie ? "NOW WATCHING" : "THE SCREEN IS YOURS"}</p>
-              <h2>{movie?.title ?? "Pick the opening act"}</h2>
-              <p>
-                {movie
-                  ? `${movie.genres.join(" · ") || "Shared video"}${movie.minutes ? ` · ${movie.minutes} min` : ""}`
-                  : "A film, your friends, and nowhere else to be."}
-              </p>
-            </div>
-            <div className="reactions" aria-label="Send a reaction">
-              {["😂", "😱", "🔥", "❤️", "👏"].map((emoji) => (
-                <button
-                  key={emoji}
-                  disabled={!movie || !connected}
-                  aria-label={`React ${emoji}`}
-                  onClick={() => room.api.react(emoji, time)}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
-          {!room.canControl && (
-            <p className="host-note">
-              <Crown size={14} /> The host controls playback. You can still chat, react, and add to
-              the queue.
-            </p>
-          )}
-          <section className="room-discovery" id="room-discover">
-            <div className="discovery-heading">
-              <div>
-                <p className="eyebrow">THE SHORTLIST</p>
-                <h2>Find your next watch</h2>
-              </div>
-              <label className="search-field">
-                <Search size={16} />
-                <input
-                  aria-label="Search films"
-                  placeholder="Search films, genres…"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </label>
-            </div>
-            <div className="category-tabs" aria-label="Film category">
-              {["All films", ...CATEGORIES].map((c) => (
-                <button
-                  key={c}
-                  aria-pressed={c === category}
-                  className={category === c ? "active" : ""}
-                  onClick={() => setCategory(c)}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-            <div className="room-film-grid">
-              {films.map(({ film }) => (
-                <article className="room-film" key={film.id}>
-                  <div className="room-film-image">
-                    <img src={film.thumb} alt="" loading="lazy" />
-                    <span>{film.minutes} min</span>
-                    <button
-                      disabled={!connected || !room.canControl}
-                      className="film-play"
-                      aria-label={`Play ${film.title}`}
-                      onClick={() => room.api.load(film.id)}
-                    >
-                      <Play size={18} fill="currentColor" />
-                    </button>
-                  </div>
-                  <div className="room-film-copy">
-                    <div>
-                      <h3>{film.title}</h3>
-                      <p>{film.genres.slice(0, 2).join(" · ")}</p>
-                    </div>
-                    <button
-                      disabled={!connected}
-                      aria-label={`Queue ${film.title}`}
-                      onClick={() => {
-                        room.api.enqueue(film.id);
-                        setNotice(`${film.title} added to the queue`);
-                      }}
-                    >
-                      <Plus size={18} />
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-            {!films.length && (
-              <p className="empty-results">No films found. Try another title or category.</p>
-            )}
-            <form
-              className="video-link-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                try {
-                  const url = new URL(mediaUrl);
-                  if (!["http:", "https:"].includes(url.protocol)) throw new Error();
-                  room.api.enqueue(url.href);
-                  setMediaUrl("");
-                  setTab("queue");
-                  setNotice("Video link added to the queue.");
-                } catch {
-                  setNotice("Enter a complete HTTP or HTTPS video URL.");
-                }
-              }}
+          <div className="watch-mode-tabs" role="tablist" aria-label="Where to watch">
+            <button
+              role="tab"
+              aria-selected={watchMode === "direct"}
+              onClick={() => setWatchMode("direct")}
             >
-              <div>
-                <b>Bring your own video</b>
-                <p>Direct MP4 or WebM links work here. Streaming-service page links don’t.</p>
-              </div>
-              <div>
-                <input
-                  type="url"
-                  aria-label="Direct video URL"
-                  placeholder="https://…/video.mp4"
-                  value={mediaUrl}
-                  onChange={(e) => setMediaUrl(e.target.value)}
-                  required
+              Samples & video links
+            </button>
+            <button
+              role="tab"
+              aria-selected={watchMode === "stream"}
+              onClick={() => setWatchMode("stream")}
+            >
+              Streaming service
+            </button>
+          </div>
+          {watchMode === "stream" ? (
+            <StreamingPanel code={code} id={me.id} />
+          ) : (
+            <>
+              <div ref={screen} className="player-screen">
+                <video
+                  ref={v}
+                  playsInline
+                  poster={movie?.thumb || undefined}
+                  onTimeUpdate={() => setTime(v.current?.currentTime ?? 0)}
+                  onDurationChange={() =>
+                    setDuration(Number.isFinite(v.current?.duration) ? v.current!.duration : 0)
+                  }
+                  onError={() =>
+                    setMediaError(
+                      "This video couldn’t load. Try another film or check the video link.",
+                    )
+                  }
+                  onEnded={() => {
+                    if (room.canControl) {
+                      room.api.pause();
+                      if (s.queue.length) room.api.playNext();
+                    }
+                  }}
                 />
-                <button className="action-secondary" disabled={!connected} type="submit">
-                  <Plus size={16} /> Add
-                </button>
+                {!movie && (
+                  <div className="player-empty">
+                    <span>
+                      <Film size={34} />
+                    </span>
+                    <h2>The night starts here.</h2>
+                    <p>Choose a film below or add a direct video link.</p>
+                    <a href="#room-discover" className="action-primary">
+                      Find something to watch <ChevronRight size={17} />
+                    </a>
+                  </div>
+                )}
+                {movie && (
+                  <span className="player-badge">
+                    <Radio size={12} /> Shared playback
+                  </span>
+                )}
+                {mediaError && (
+                  <div className="player-message" role="alert">
+                    <p>{mediaError}</p>
+                    <button
+                      onClick={() => {
+                        v.current?.load();
+                        setMediaError("");
+                      }}
+                      className="action-secondary"
+                    >
+                      Retry video
+                    </button>
+                  </div>
+                )}
+                {needsPlay && !mediaError && (
+                  <button
+                    className="enable-play"
+                    onClick={() => {
+                      void v.current
+                        ?.play()
+                        .then(() => setNeedsPlay(false))
+                        .catch(() =>
+                          setNotice("Your browser blocked playback. Try the play button again."),
+                        );
+                    }}
+                  >
+                    <Play size={25} fill="currentColor" /> Click to enable playback
+                  </button>
+                )}
+                {room.floats.map((f) => (
+                  <span
+                    key={f.id}
+                    className="floating-reaction animate-float-up"
+                    style={{ left: `${f.x}%` }}
+                  >
+                    {f.emoji}
+                  </span>
+                ))}
               </div>
-            </form>
-          </section>
+              <div className="player-controls">
+                <div className="control-row">
+                  <button
+                    className="play-control"
+                    aria-label={s.playback.playing ? "Pause for everyone" : "Play for everyone"}
+                    disabled={!controls}
+                    onClick={() => (s.playback.playing ? room.api.pause() : room.api.play())}
+                  >
+                    {s.playback.playing ? (
+                      <Pause size={18} fill="currentColor" />
+                    ) : (
+                      <Play size={18} fill="currentColor" />
+                    )}
+                  </button>
+                  <button
+                    className="time-jump"
+                    disabled={!controls}
+                    onClick={() => room.api.seek(Math.max(0, time - 10))}
+                  >
+                    −10
+                  </button>
+                  <button
+                    className="time-jump"
+                    disabled={!controls}
+                    onClick={() => room.api.seek(time + 10)}
+                  >
+                    +10
+                  </button>
+                  <span className="time-label">
+                    {formatTime(time)} <i>/ {formatTime(duration)}</i>
+                  </span>
+                  <div className="control-spacer" />
+                  <button
+                    className="countdown-control"
+                    disabled={!controls}
+                    onClick={() => room.api.countdownPlay()}
+                  >
+                    3 · 2 · 1 start
+                  </button>
+                  <button
+                    aria-label={muted ? "Unmute" : "Mute"}
+                    onClick={() => {
+                      const next = !muted;
+                      setMuted(next);
+                      if (v.current) v.current.muted = next;
+                    }}
+                  >
+                    {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                  </button>
+                  <button
+                    aria-label="Full screen"
+                    onClick={() => {
+                      void screen.current
+                        ?.requestFullscreen()
+                        .catch(() => setNotice("Full screen is unavailable in this browser."));
+                    }}
+                  >
+                    <Expand size={18} />
+                  </button>
+                </div>
+                <input
+                  className="video-progress"
+                  type="range"
+                  aria-label="Seek for everyone"
+                  min={0}
+                  max={duration || 1}
+                  step={0.1}
+                  value={Math.min(time, duration || 1)}
+                  disabled={!controls || !duration}
+                  onChange={(e) => room.api.seek(Number(e.target.value))}
+                />
+              </div>
+              <div className="now-watching">
+                <div>
+                  <p className="eyebrow">{movie ? "NOW WATCHING" : "THE SCREEN IS YOURS"}</p>
+                  <h2>{movie?.title ?? "Pick the opening act"}</h2>
+                  <p>
+                    {movie
+                      ? `${movie.genres.join(" · ") || "Shared video"}${movie.minutes ? ` · ${movie.minutes} min` : ""}`
+                      : "A film, your friends, and nowhere else to be."}
+                  </p>
+                </div>
+                <div className="reactions" aria-label="Send a reaction">
+                  {["😂", "😱", "🔥", "❤️", "👏"].map((emoji) => (
+                    <button
+                      key={emoji}
+                      disabled={!movie || !connected}
+                      aria-label={`React ${emoji}`}
+                      onClick={() => room.api.react(emoji, time)}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {!room.canControl && (
+                <p className="host-note">
+                  <Crown size={14} /> The host controls playback. You can still chat, react, and add
+                  to the queue.
+                </p>
+              )}
+              <section className="room-discovery" id="room-discover">
+                <div className="discovery-heading">
+                  <div>
+                    <p className="eyebrow">THE SHORTLIST</p>
+                    <h2>Find your next watch</h2>
+                  </div>
+                  <label className="search-field">
+                    <Search size={16} />
+                    <input
+                      aria-label="Search films"
+                      placeholder="Search films, genres…"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                    />
+                  </label>
+                </div>
+                <div className="category-tabs" aria-label="Film category">
+                  {["All films", ...CATEGORIES].map((c) => (
+                    <button
+                      key={c}
+                      aria-pressed={c === category}
+                      className={category === c ? "active" : ""}
+                      onClick={() => setCategory(c)}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <div className="room-film-grid">
+                  {films.map(({ film }) => (
+                    <article className="room-film" key={film.id}>
+                      <div className="room-film-image">
+                        <img src={film.thumb} alt="" loading="lazy" />
+                        <span>{film.minutes} min</span>
+                        <button
+                          disabled={!connected || !room.canControl}
+                          className="film-play"
+                          aria-label={`Play ${film.title}`}
+                          onClick={() => room.api.load(film.id)}
+                        >
+                          <Play size={18} fill="currentColor" />
+                        </button>
+                      </div>
+                      <div className="room-film-copy">
+                        <div>
+                          <h3>{film.title}</h3>
+                          <p>{film.genres.slice(0, 2).join(" · ")}</p>
+                        </div>
+                        <button
+                          disabled={!connected}
+                          aria-label={`Queue ${film.title}`}
+                          onClick={() => {
+                            room.api.enqueue(film.id);
+                            setNotice(`${film.title} added to the queue`);
+                          }}
+                        >
+                          <Plus size={18} />
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+                {!films.length && (
+                  <p className="empty-results">No films found. Try another title or category.</p>
+                )}
+                <form
+                  className="video-link-form"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    try {
+                      const url = new URL(mediaUrl);
+                      if (!["http:", "https:"].includes(url.protocol)) throw new Error();
+                      room.api.enqueue(url.href);
+                      setMediaUrl("");
+                      setTab("queue");
+                      setNotice("Video link added to the queue.");
+                    } catch {
+                      setNotice("Enter a complete HTTP or HTTPS video URL.");
+                    }
+                  }}
+                >
+                  <div>
+                    <b>Bring your own video</b>
+                    <p>Direct MP4 or WebM links work here. Streaming-service page links don’t.</p>
+                  </div>
+                  <div>
+                    <input
+                      type="url"
+                      aria-label="Direct video URL"
+                      placeholder="https://…/video.mp4"
+                      value={mediaUrl}
+                      onChange={(e) => setMediaUrl(e.target.value)}
+                      required
+                    />
+                    <button className="action-secondary" disabled={!connected} type="submit">
+                      <Plus size={16} /> Add
+                    </button>
+                  </div>
+                </form>
+              </section>
+            </>
+          )}
         </section>
         <aside className="party-sidebar">
           <div className="sidebar-heading">
@@ -593,76 +645,88 @@ function Room() {
               <p className="chat-footnote">Be kind. Don’t spoil the ending.</p>
             </>
           )}
-          {tab === "queue" && (
-            <div className="sidebar-content">
-              <h3>
-                Up next <span>{s.queue.length}</span>
-              </h3>
-              <p className="sidebar-description">
-                Vote for your favorite. The most popular pick plays next.
-              </p>
-              {!s.queue.length && (
-                <div className="sidebar-empty">
-                  <ListPlus size={30} />
-                  <h4>Your double feature starts here.</h4>
-                  <p>Tap + on a film to add it to the shared queue.</p>
-                </div>
-              )}
-              {[...s.queue]
-                .sort((a, b) => b.votes.length - a.votes.length)
-                .map((item) => {
-                  const film = resolveVideo(item.videoId);
-                  return (
-                    <div className="queue-item" key={item.uid}>
-                      <span className="queue-thumb">
-                        {film?.thumb ? <img src={film.thumb} alt="" /> : <Film size={20} />}
-                      </span>
-                      <div>
-                        <b>{film?.title ?? "Video"}</b>
-                        <small>Added by {item.addedBy}</small>
+          {tab === "queue" &&
+            (watchMode === "stream" ? (
+              <div className="sidebar-content">
+                <h3>Choose on your service</h3>
+                <p className="sidebar-description">
+                  Use chat or a poll to choose the next title. The streaming host opens it on the
+                  service; viewers then click “Open the host’s video” in the extension.
+                </p>
+                <Link to="/streaming" className="text-link">
+                  Streaming help →
+                </Link>
+              </div>
+            ) : (
+              <div className="sidebar-content">
+                <h3>
+                  Up next <span>{s.queue.length}</span>
+                </h3>
+                <p className="sidebar-description">
+                  Vote for your favorite. The most popular pick plays next.
+                </p>
+                {!s.queue.length && (
+                  <div className="sidebar-empty">
+                    <ListPlus size={30} />
+                    <h4>Your double feature starts here.</h4>
+                    <p>Tap + on a film to add it to the shared queue.</p>
+                  </div>
+                )}
+                {[...s.queue]
+                  .sort((a, b) => b.votes.length - a.votes.length)
+                  .map((item) => {
+                    const film = resolveVideo(item.videoId);
+                    return (
+                      <div className="queue-item" key={item.uid}>
+                        <span className="queue-thumb">
+                          {film?.thumb ? <img src={film.thumb} alt="" /> : <Film size={20} />}
+                        </span>
+                        <div>
+                          <b>{film?.title ?? "Video"}</b>
+                          <small>Added by {item.addedBy}</small>
+                          <button
+                            className={item.votes.includes(me.id) ? "voted" : ""}
+                            onClick={() => room.api.voteQueue(item.uid)}
+                            aria-label={`Vote for ${film?.title}`}
+                          >
+                            <ThumbsUp size={12} /> {item.votes.length}
+                          </button>
+                        </div>
                         <button
-                          className={item.votes.includes(me.id) ? "voted" : ""}
-                          onClick={() => room.api.voteQueue(item.uid)}
-                          aria-label={`Vote for ${film?.title}`}
+                          aria-label={`Remove ${film?.title} from queue`}
+                          onClick={() => room.api.removeQueue(item.uid)}
                         >
-                          <ThumbsUp size={12} /> {item.votes.length}
+                          <Trash2 size={14} />
                         </button>
                       </div>
-                      <button
-                        aria-label={`Remove ${film?.title} from queue`}
-                        onClick={() => room.api.removeQueue(item.uid)}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  );
-                })}
-              <button
-                className="action-primary full-width"
-                disabled={!s.queue.length || !room.canControl || !connected}
-                onClick={() => room.api.playNext()}
-              >
-                <SkipForward size={16} /> Play next
-              </button>
-              <h4 className="picks-heading">A few ideas for the room</h4>
-              {picks.map((film) => (
+                    );
+                  })}
                 <button
-                  className="suggested-pick"
-                  disabled={!connected}
-                  key={film.id}
-                  onClick={() => room.api.enqueue(film.id)}
+                  className="action-primary full-width"
+                  disabled={!s.queue.length || !room.canControl || !connected}
+                  onClick={() => room.api.playNext()}
                 >
-                  <span>
-                    {film.title}
-                    <small>
-                      {film.mood} · {film.minutes} min
-                    </small>
-                  </span>
-                  <Plus size={16} />
+                  <SkipForward size={16} /> Play next
                 </button>
-              ))}
-            </div>
-          )}
+                <h4 className="picks-heading">A few ideas for the room</h4>
+                {picks.map((film) => (
+                  <button
+                    className="suggested-pick"
+                    disabled={!connected}
+                    key={film.id}
+                    onClick={() => room.api.enqueue(film.id)}
+                  >
+                    <span>
+                      {film.title}
+                      <small>
+                        {film.mood} · {film.minutes} min
+                      </small>
+                    </span>
+                    <Plus size={16} />
+                  </button>
+                ))}
+              </div>
+            ))}
           {tab === "people" && (
             <div className="sidebar-content">
               <h3>Your people</h3>

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DocsRouteImport } from './routes/docs'
+import { Route as StreamingRouteImport } from './routes/streaming'
 import { Route as RoomCodeRouteImport } from './routes/room.$code'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const DocsRoute = DocsRouteImport.update({
   path: '/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StreamingRoute = StreamingRouteImport.update({
+  id: '/streaming',
+  path: '/streaming',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RoomCodeRoute = RoomCodeRouteImport.update({
   id: '/room/$code',
   path: '/room/$code',
@@ -32,30 +38,34 @@ const RoomCodeRoute = RoomCodeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/docs': typeof DocsRoute
+  '/streaming': typeof StreamingRoute
   '/room/$code': typeof RoomCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/docs': typeof DocsRoute
+  '/streaming': typeof StreamingRoute
   '/room/$code': typeof RoomCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/docs': typeof DocsRoute
+  '/streaming': typeof StreamingRoute
   '/room/$code': typeof RoomCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/docs' | '/room/$code'
+  fullPaths: '/' | '/docs' | '/streaming' | '/room/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/docs' | '/room/$code'
-  id: '__root__' | '/' | '/docs' | '/room/$code'
+  to: '/' | '/docs' | '/streaming' | '/room/$code'
+  id: '__root__' | '/' | '/docs' | '/streaming' | '/room/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DocsRoute: typeof DocsRoute
+  StreamingRoute: typeof StreamingRoute
   RoomCodeRoute: typeof RoomCodeRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/streaming': {
+      id: '/streaming'
+      path: '/streaming'
+      fullPath: '/streaming'
+      preLoaderRoute: typeof StreamingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/room/$code': {
       id: '/room/$code'
       path: '/room/$code'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DocsRoute: DocsRoute,
+  StreamingRoute: StreamingRoute,
   RoomCodeRoute: RoomCodeRoute,
 }
 export const routeTree = rootRouteImport

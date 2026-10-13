@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Watch Together</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header><strong>watchtogether.</strong><span>STREAMING COMPANION</span></header>
+    <p id="error" role="alert" hidden></p>
+    <section id="setup">
+      <h1>Bring this tab into your room.</h1>
+      <p>
+        Open the film on your streaming service first. Each viewer needs their own account access.
+      </p>
+      <form id="connect-form">
+        <label for="setup-code">Room setup or six-character code</label
+        ><textarea
+          id="setup-code"
+          placeholder="Paste the setup from your Watch Together room"
+          rows="2"
+          required
+        ></textarea
+        ><label for="nickname">Your nickname</label
+        ><input id="nickname" maxlength="24" required placeholder="Your name" />
+        <details>
+          <summary>Server settings</summary>
+          <label for="relay">Realtime server</label
+          ><input id="relay" type="text" value="ws://localhost:3001" /><label for="room-site"
+            >Room website</label
+          ><input id="room-site" type="url" value="http://localhost:3000" />
+        </details>
+        <button type="submit" id="connect">Connect this video tab</button
+        ><small
+          >Permission is requested for this site, detected streaming-player frames, and your room
+          server.</small
+        >
+      </form>
+    </section>
+    <section id="connected" hidden>
+      <div class="status-line"><b id="connection"></b><span id="role"></span></div>
+      <h1 id="title"></h1>
+      <p id="status" role="status"></p>
+      <div class="meta"><span id="room-code"></span><span id="service"></span></div>
+      <button id="open-host" hidden>Open the host’s video in this tab</button>
+      <div class="actions">
+        <button id="rescan" class="secondary">Find player again</button
+        ><button id="open-room" class="secondary">Open room</button>
+      </div>
+      <div id="members"></div>
+      <h2>Room chat</h2>
+      <div id="messages" role="log" aria-label="Room messages"></div>
+      <form id="chat-form">
+        <input
+          id="chat"
+          aria-label="Chat message"
+          maxlength="500"
+          placeholder="Write a message…"
+          required
+        /><button type="submit">Send</button>
+      </form>
+      <button id="disconnect" class="secondary">Disconnect this tab</button>
+    </section>
+    <footer>Syncs controls. Your video stays with your streaming service.</footer>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

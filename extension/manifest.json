@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Watch Together — Streaming Companion",
+  "version": "0.1.0",
+  "minimum_chrome_version": "116",
+  "description": "Connect the current video tab to your Watch Together room. Everyone streams from their own account.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_popup": "popup.html", "default_title": "Watch Together" },
+  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'self'" }
+}

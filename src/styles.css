@@ -3111,3 +3111,345 @@ body:has(.room-page) {
     font-size: 10px;
   }
 }
+/* Streaming companion setup */
+.landing .party-form select {
+  display: block;
+  width: 100%;
+  margin: 0 0 14px;
+  background: #f5f0e5;
+  border: 1px solid #d7d0c2;
+  border-radius: 3px;
+  padding: 10px;
+  color: #454840;
+  font-size: 11px;
+}
+.watch-mode-tabs {
+  display: flex;
+  gap: 16px;
+  border-bottom: 1px solid #ffffff20;
+  margin: 0 0 22px;
+}
+.watch-mode-tabs button {
+  padding: 10px 3px;
+  color: #9da9ae;
+  font: 12px var(--font-display);
+  border-bottom: 2px solid transparent;
+}
+.watch-mode-tabs button[aria-selected="true"] {
+  border-color: #c7ae78;
+  color: #dfd1b6;
+}
+.streaming-panel {
+  border: 1px solid #414b4a;
+  padding: 26px;
+  background: #20282a;
+  border-radius: 4px;
+}
+.streaming-heading {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  color: #c7ae78;
+}
+.streaming-heading h2 {
+  font-size: 25px;
+  color: #e9e7df;
+  margin-top: 7px;
+  font-weight: 500;
+}
+.streaming-intro {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #a4b0b0;
+  margin: 20px 0 27px;
+  max-width: 660px;
+}
+.streaming-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  border-top: 1px solid #414b4a;
+  padding-top: 22px;
+}
+.streaming-steps > div > span {
+  font: 11px var(--font-mono);
+  color: #c7ae78;
+}
+.streaming-steps h3 {
+  font-size: 15px;
+  font-weight: 500;
+  margin: 10px 0;
+}
+.streaming-steps p {
+  font-size: 12px;
+  line-height: 1.85;
+  color: #9ba9ab;
+  margin: 10px 0 16px;
+}
+.streaming-steps .text-link {
+  font-size: 11px;
+  color: #c7ae78;
+}
+.streaming-steps .action-primary {
+  font-size: 11px;
+  padding: 10px;
+}
+.streaming-session {
+  margin-top: 30px;
+  border: 1px solid #414b4a;
+  padding: 20px;
+  background: #171c1d;
+}
+.streaming-session-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+.streaming-session-title > span:last-child {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 11px;
+  color: #99a7a7;
+}
+.streaming-session h3 {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 18px 0 8px;
+}
+.streaming-session > p {
+  font-size: 12px;
+  color: #96a5a6;
+  margin: 8px 0 16px;
+  line-height: 1.8;
+}
+.streaming-session .action-secondary {
+  font-size: 11px;
+}
+.streaming-members {
+  margin-top: 20px;
+  border-top: 1px solid #414b4a;
+}
+.streaming-members li {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 12px 0;
+  border-bottom: 1px solid #414b4a;
+  font-size: 11px;
+}
+.streaming-members b {
+  font-weight: 500;
+}
+.streaming-members span {
+  color: #8ea1a1;
+}
+.streaming-limit {
+  font-size: 11px;
+  line-height: 1.9;
+  color: #91a1a2;
+  margin-top: 22px;
+}
+.streaming-limit a {
+  color: #c7ae78;
+}
+.setup-fallback {
+  display: block;
+  font-size: 12px;
+  margin-top: 20px;
+}
+.setup-fallback textarea {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  background: #171c1d;
+  padding: 12px;
+  font: 10px var(--font-mono);
+  color: #ece9df;
+  border: 1px solid #414b4a;
+  overflow-wrap: anywhere;
+}
+.streaming-guide {
+  max-width: 1000px;
+}
+.streaming-guide .site-nav {
+  height: 80px;
+  border-bottom: 1px solid #29282326;
+}
+.streaming-guide .text-link {
+  color: #79776e;
+}
+.guide-hero {
+  padding: 60px 0 45px;
+}
+.guide-hero .eyebrow {
+  color: #a56649;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.guide-hero h1 {
+  font-size: 45px;
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 20px 0;
+  letter-spacing: -1.5px;
+}
+.guide-hero > p:not(.eyebrow) {
+  font-size: 14px;
+  color: #77776e;
+  line-height: 1.9;
+  max-width: 650px;
+  margin-bottom: 25px;
+}
+.streaming-guide .action-primary {
+  background: #34474b;
+  color: #faf7f0;
+  border-color: #34474b;
+  border-radius: 3px;
+  font-size: 12px;
+}
+.guide-hero small {
+  display: block;
+  font-size: 11px;
+  color: #8d887b;
+  margin-top: 12px;
+  line-height: 1.8;
+}
+.guide-section {
+  padding: 35px 0;
+  border-top: 1px solid #29282326;
+}
+.guide-section h2 {
+  font-size: 25px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+.guide-section ol {
+  list-style: decimal;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.guide-section li {
+  padding-left: 8px;
+  font-size: 13px;
+}
+.guide-section b {
+  font-weight: 600;
+}
+.guide-section p {
+  font-size: 13px;
+  line-height: 1.9;
+  color: #77776e;
+  max-width: 800px;
+  margin: 8px 0 15px;
+}
+.guide-section code {
+  font-size: 11px;
+  background: #ebe3d4;
+  padding: 2px 5px;
+  color: #515e59;
+  overflow-wrap: anywhere;
+}
+.guide-section-title {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: #a56649;
+  margin-bottom: 20px;
+}
+.guide-section-title h2 {
+  margin: 0;
+  color: #292823;
+}
+.compatibility-table {
+  border: 1px solid #d7d0c2;
+  margin: 25px 0;
+}
+.compatibility-table > div {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 22px;
+  padding: 18px;
+  border-bottom: 1px solid #d7d0c2;
+  font-size: 12px;
+}
+.compatibility-table > div:last-child {
+  border-bottom: 0;
+}
+.compatibility-table span {
+  color: #7d786c;
+  line-height: 1.8;
+}
+.streaming-guide .site-footer {
+  color: #a56649;
+  border-color: #d7d0c2;
+}
+.streaming-guide .site-footer > a {
+  color: #79776e;
+}
+@media (max-width: 1050px) {
+  .streaming-steps {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .streaming-steps > div {
+    border-bottom: 1px solid #414b4a;
+    padding-bottom: 15px;
+  }
+  .streaming-steps > div:last-child {
+    border-bottom: 0;
+  }
+  .streaming-steps h3 {
+    margin-top: 8px;
+  }
+  .streaming-heading h2 {
+    font-size: 22px;
+  }
+}
+@media (max-width: 500px) {
+  .streaming-panel {
+    padding: 18px;
+  }
+  .streaming-heading {
+    gap: 12px;
+  }
+  .streaming-heading h2 {
+    font-size: 20px;
+  }
+  .streaming-session {
+    padding: 15px;
+  }
+  .streaming-session-title {
+    align-items: start;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .guide-hero h1 {
+    font-size: 32px;
+  }
+  .guide-hero {
+    padding-top: 35px;
+  }
+  .guide-section h2 {
+    font-size: 22px;
+  }
+  .compatibility-table > div {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+  .streaming-guide .site-nav > .text-link {
+    font-size: 10px;
+  }
+  .streaming-members li {
+    flex-direction: column;
+    gap: 5px;
+  }
+  .watch-mode-tabs {
+    gap: 13px;
+  }
+  .watch-mode-tabs button {
+    font-size: 11px;
+  }
+}

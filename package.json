@@ -17,7 +17,10 @@
     "start": "concurrently -k \"npm:start:web\" \"npm:start:realtime\"",
     "start:web": "node .output/server/index.mjs",
     "start:realtime": "node realtime/server.mjs",
-    "test:realtime": "node --test realtime/server.test.mjs"
+    "test:realtime": "node --test realtime/*.test.mjs",
+    "package:extension": "node scripts/package-extension.mjs",
+    "prebuild": "npm run package:extension",
+    "test:extension": "node --test extension/tests/*.test.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"

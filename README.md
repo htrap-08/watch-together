@@ -50,3 +50,20 @@ rooms, membership updates, event forwarding, and reconnects. The app's `/docs`
 page describes playback synchronization and failure handling. Targets of 250 ms
 control latency at p95 and 500 ms corrected drift require measurement on the
 actual deployment; unit tests do not establish those guarantees.
+
+## Streaming services
+
+The `/streaming` page provides the installable companion extension and honest
+compatibility notes. Select **Streaming service** in a room, copy its extension
+setup, and connect from each viewer's own streaming tab. See
+[extension/README.md](extension/README.md) for installation, service adapters,
+permissions, deployment, and limitations.
+
+The streaming relay owns host-authoritative playback state and restores it for
+late joiners. It shares room chat with the website, while sample-video playback
+remains a separate mode. The first streaming participant becomes host. Every
+participant must have authorized access to the same title; protected video is
+never captured or forwarded.
+
+Commercial service adapters require signed-in testing before claiming verified
+support. This package currently targets desktop Chrome and Edge.
