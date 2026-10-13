@@ -74,7 +74,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Watch Party — watch together, perfectly in sync" },
+      { title: "Watch Together — Movie night, wherever you are" },
       {
         name: "description",
         content:

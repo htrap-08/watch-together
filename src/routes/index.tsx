@@ -1,18 +1,28 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Clapperboard, Gauge, Users, Vote, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  ArrowRight,
+  Check,
+  Clapperboard,
+  Link2,
+  MessageCircle,
+  Play,
+  Radio,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { CATALOG } from "@/lib/catalog";
 import { loadMe, newRoomCode, saveMe } from "@/lib/identity";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Watch Party — watch together, perfectly in sync" },
-      { name: "description", content: "Open a room, share the code, and watch videos together with synced playback, live chat, reactions and polls." },
-      { property: "og:title", content: "Watch Party — watch together, perfectly in sync" },
-      { property: "og:description", content: "Synced playback, live chat, reactions, polls and shared queues for up to dozens of friends." },
+      { title: "Watch Together — Movie night, wherever you are" },
+      {
+        name: "description",
+        content:
+          "Start a watch room, invite your friends, and enjoy synchronized video, live chat, and a shared queue.",
+      },
     ],
   }),
   component: Index,
@@ -22,90 +32,301 @@ function Index() {
   const nav = useNavigate();
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
-  useEffect(() => {
-    setName(loadMe()?.name ?? "");
-  }, []);
-
-  const go = (c: string) => {
-    if (!name.trim()) return;
+  const [mode, setMode] = useState<"create" | "join">("create");
+  const [featured, setFeatured] = useState(CATALOG[1]!);
+  useEffect(() => setName(loadMe()?.name ?? ""), []);
+  const go = () => {
+    if (!name.trim() || (mode === "join" && code.length !== 6)) return;
     saveMe(name);
-    void nav({ to: "/room/$code", params: { code: c.toUpperCase() } });
+    if (mode === "create") sessionStorage.setItem("watchparty:first-video", featured.id);
+    void nav({
+      to: "/room/$code",
+      params: { code: mode === "create" ? newRoomCode() : code.toUpperCase() },
+    });
   };
-
-  const posters = [...CATALOG, ...CATALOG];
-
   return (
-    <main className="min-h-screen overflow-hidden">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <div className="flex items-center gap-2 font-display text-xl font-bold">
-          <Clapperboard className="h-6 w-6 text-primary" /> Watch Party
-        </div>
-        <Link to="/docs" className="text-sm text-muted-foreground hover:text-foreground">
-          How sync works →
+    <main className="landing">
+      <header className="site-nav page-width">
+        <Link to="/" className="brand">
+          <span className="brand-mark">
+            <Play size={18} fill="currentColor" />
+          </span>
+          watch<span className="brand-light">together</span>
+          <span className="brand-dot">.</span>
         </Link>
+        <nav aria-label="Main navigation">
+          <a href="#how-it-works">How it works</a>
+          <a href="#discover">Discover</a>
+          <a className="nav-cta" href="#start">
+            Let’s watch <ArrowRight size={15} />
+          </a>
+        </nav>
       </header>
-
-      <section className="mx-auto grid max-w-6xl gap-12 px-6 pb-16 pt-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-        <div>
-          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-success" /> Sub-250ms control sync
+      <section className="hero page-width">
+        <div className="hero-copy">
+          <p className="eyebrow">
+            <span className="live-dot" /> FAR APART. SAME MOVIE NIGHT.
           </p>
-          <h1 className="text-5xl font-extrabold leading-[0.95] md:text-7xl">
-            Same frame.
+          <h1>
+            Your people.
             <br />
-            <span className="text-marquee">Every couch.</span>
+            Your movie.
+            <br />
+            <em>One play button.</em>
           </h1>
-          <p className="mt-6 max-w-md text-lg text-muted-foreground">
-            Open a room, send the code, and everyone presses play at exactly the same moment — then argue about it in chat.
+          <p className="hero-description">
+            Make room for a little together time. Watch in sync, share every reaction, and keep the
+            conversation going.
+          </p>
+          <div className="party-form" id="start">
+            <div className="form-tabs" role="tablist" aria-label="Party action">
+              {(["create", "join"] as const).map((m) => (
+                <button
+                  key={m}
+                  role="tab"
+                  aria-selected={mode === m}
+                  className={mode === m ? "active" : ""}
+                  onClick={() => setMode(m)}
+                >
+                  {m === "create" ? "Start a party" : "Join a party"}
+                </button>
+              ))}
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                go();
+              }}
+            >
+              <label htmlFor="display-name">What should we call you?</label>
+              <div className="form-row">
+                <input
+                  id="display-name"
+                  placeholder="Your nickname"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={24}
+                  required
+                  autoComplete="nickname"
+                />
+                {mode === "create" && (
+                  <button className="action-primary" type="submit">
+                    Create room <ArrowRight size={17} />
+                  </button>
+                )}
+              </div>
+              {mode === "join" && (
+                <div className="form-row join-row">
+                  <input
+                    aria-label="Room code"
+                    placeholder="6-character room code"
+                    value={code}
+                    onChange={(e) =>
+                      setCode(e.target.value.replace(/[^a-z0-9]/gi, "").toUpperCase())
+                    }
+                    minLength={6}
+                    maxLength={6}
+                    required
+                  />
+                  <button className="action-primary" type="submit">
+                    Join room <ArrowRight size={17} />
+                  </button>
+                </div>
+              )}
+            </form>
+          </div>
+          <p className="small-note">
+            <Check size={14} /> No account. No extension. Just your friends.
           </p>
         </div>
-
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-screen">
-          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your name</label>
-          <Input className="mt-2 h-12 text-base" placeholder="e.g. Popcorn Paula" value={name} onChange={(e) => setName(e.target.value)} maxLength={24} />
-          <Button variant="marquee" size="lg" className="mt-4 w-full" disabled={!name.trim()} onClick={() => go(newRoomCode())}>
-            Start a new party
-          </Button>
-          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="h-px flex-1 bg-border" /> or join one <div className="h-px flex-1 bg-border" />
+        <div className="hero-visual">
+          <div className="orbit-label">
+            <Sparkles size={16} /> THE BEST SEAT IS NEXT TO YOUR FRIENDS
           </div>
-          <form
-            className="flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (code.trim().length >= 4) go(code.trim());
-            }}
-          >
-            <Input className="h-12 font-mono text-lg uppercase tracking-[0.3em]" placeholder="ROOM CODE" value={code} onChange={(e) => setCode(e.target.value.replace(/[^a-z0-9]/gi, ""))} maxLength={8} />
-            <Button type="submit" variant="secondary" size="lg" className="h-12" disabled={!name.trim() || code.length < 4}>
-              Join
-            </Button>
-          </form>
+          <div className="preview-window" aria-label="Illustration of a watch room">
+            <div className="preview-top">
+              <span>
+                <i />
+                <i />
+                <i />
+              </span>
+              <span>
+                <Radio size={12} /> Movie night · preview
+              </span>
+              <span>•••</span>
+            </div>
+            <div className="preview-picture">
+              <img src={featured.thumb} alt={featured.title} />
+              <div className="preview-shade" />
+              <span className="preview-live">
+                <span className="live-dot" /> IN SYNC
+              </span>
+              <div className="preview-title">
+                <span>TONIGHT’S PICK</span>
+                <h2>{featured.title}</h2>
+                <p>
+                  {featured.genres.slice(0, 2).join(" · ")} / {featured.minutes} min
+                </p>
+              </div>
+              <span className="preview-play">
+                <Play size={24} fill="currentColor" />
+              </span>
+            </div>
+            <div className="preview-bottom">
+              <span>
+                <Play size={12} fill="currentColor" /> 00:12
+              </span>
+              <div className="preview-progress">
+                <i />
+              </div>
+              <span>{featured.minutes}:00</span>
+            </div>
+          </div>
+          <div className="chat-sticker">
+            <span className="demo-avatar">J</span>
+            <div>
+              <b>
+                Jamie <span>just now · demo</span>
+              </b>
+              <p>okay this is already my favorite scene 🍿</p>
+            </div>
+          </div>
+          <div className="reaction-sticker">
+            😂 <span>❤️</span> 🍿
+          </div>
+          <div className="visual-caption">
+            <span className="avatar-stack">
+              <i>A</i>
+              <i>J</i>
+              <i>M</i>
+            </span>
+            <span>Different couches. Same good company.</span>
+          </div>
         </div>
       </section>
-
-      <div className="relative py-4">
-        <div className="flex w-max animate-marquee-scroll gap-4">
-          {posters.map((m, i) => (
-            <img key={i} src={m.thumb} alt={m.title} loading="lazy" className="h-36 w-64 rounded-xl object-cover opacity-70" />
+      <section className="promise-strip">
+        <div className="page-width">
+          <span>
+            <Radio size={18} /> Playback that stays together
+          </span>
+          <span>
+            <MessageCircle size={18} /> Chat beside the action
+          </span>
+          <span>
+            <Users size={18} /> Everyone gets a say
+          </span>
+          <span>
+            <Link2 size={18} /> One link brings you in
+          </span>
+        </div>
+      </section>
+      <section className="discovery page-width" id="discover">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">LESS SCROLLING, MORE WATCHING</p>
+            <h2>Something for tonight.</h2>
+          </div>
+          <p>
+            A few short films to get the party started.
+            <br />
+            Pick your opening act.
+          </p>
+        </div>
+        <div className="film-grid">
+          {CATALOG.slice(0, 4).map((film, i) => (
+            <button
+              key={film.id}
+              className={`film-card ${featured.id === film.id ? "selected" : ""}`}
+              onClick={() => {
+                setFeatured(film);
+                document
+                  .getElementById("start")
+                  ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                document.getElementById("display-name")?.focus({ preventScroll: true });
+              }}
+            >
+              <div className="film-image">
+                <img src={film.thumb} alt="" loading="lazy" />
+                <span className="film-tag">
+                  {
+                    ["A little adventure", "A little magic", "A little action", "A quick preview"][
+                      i
+                    ]
+                  }
+                </span>
+                <span className="film-launch">
+                  <Play size={17} fill="currentColor" />
+                </span>
+              </div>
+              <div className="film-info">
+                <h3>{film.title}</h3>
+                <span>
+                  {film.minutes} min <i>·</i> {film.genres[0]}
+                </span>
+              </div>
+            </button>
           ))}
         </div>
-      </div>
-
-      <section className="mx-auto grid max-w-6xl gap-4 px-6 py-16 md:grid-cols-4">
-        {[
-          { i: Zap, t: "Scheduled starts", d: "Play commands are timestamped slightly in the future so everyone starts on the same frame." },
-          { i: Gauge, t: "Drift doctor", d: "Each viewer silently speeds up or slows down to stay within half a second." },
-          { i: Users, t: "Pass the remote", d: "Hand host powers to anyone; if the host leaves, the longest-watching guest takes over." },
-          { i: Vote, t: "Room democracy", d: "Vote the queue, run polls, and see where the room laughed on the reaction heatmap." },
-        ].map(({ i: Icon, t, d }) => (
-          <div key={t} className="rounded-2xl border border-border bg-card/60 p-5">
-            <Icon className="h-5 w-5 text-primary" />
-            <h3 className="mt-3 font-bold">{t}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">{d}</p>
-          </div>
-        ))}
+        <p className="catalog-note">
+          Sample films and videos. You can also share a direct video link inside your room.
+        </p>
       </section>
+      <section className="how-section page-width" id="how-it-works">
+        <div>
+          <p className="eyebrow">THE GROUP CHAT HAS PLANS NOW</p>
+          <h2>
+            Three steps.
+            <br />
+            <em>A whole night together.</em>
+          </h2>
+          <Link to="/docs" className="text-link">
+            The details behind the sync <ArrowRight size={16} />
+          </Link>
+        </div>
+        <ol>
+          {[
+            {
+              title: "Make a room",
+              text: "Choose a nickname and your first film. Your space is ready in seconds.",
+            },
+            {
+              title: "Bring your people",
+              text: "Copy the invite link. Friends join from their browser with the room code.",
+            },
+            {
+              title: "Press play, together",
+              text: "Playback stays in sync while you chat, react, and vote on what’s next.",
+            },
+          ].map((step, i) => (
+            <li key={step.title}>
+              <span>0{i + 1}</span>
+              <div>
+                <h3>{step.title}</h3>
+                <p>{step.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+      <section className="closing page-width">
+        <Clapperboard size={30} />
+        <h2>
+          “One more?” hits different
+          <br />
+          when you’re together.
+        </h2>
+        <a href="#start" className="action-primary">
+          Make tonight a movie night <ArrowRight size={18} />
+        </a>
+      </section>
+      <footer className="site-footer page-width">
+        <span>
+          watchtogether. <small>Made for nights worth sharing.</small>
+        </span>
+        <Link to="/docs">
+          How sync works <ArrowRight size={14} />
+        </Link>
+      </footer>
     </main>
   );
 }

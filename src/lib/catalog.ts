@@ -1,11 +1,9 @@
-const B = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/";
-
 export type Movie = {
   id: string;
   title: string;
   year: number;
   genres: string[];
-  category: "Feature Shorts" | "Quick Bites" | "Motor Club";
+  category: "Short films" | "Trailers";
   minutes: number;
   rating: number;
   mood: string;
@@ -14,33 +12,61 @@ export type Movie = {
   thumb: string;
 };
 
-const m = (
-  id: string,
-  file: string,
-  title: string,
-  year: number,
-  genres: string[],
-  category: Movie["category"],
-  minutes: number,
-  rating: number,
-  mood: string,
-  description: string,
-): Movie => ({ id, title, year, genres, category, minutes, rating, mood, description, src: `${B}${file}.mp4`, thumb: `${B}images/${file}.jpg` });
-
+// Open films from the Blender Foundation and official W3C media demonstrations.
 export const CATALOG: Movie[] = [
-  m("bbb", "BigBuckBunny", "Big Buck Bunny", 2008, ["Animation", "Comedy", "Family"], "Feature Shorts", 10, 7.4, "Cozy", "A gentle giant rabbit takes revenge on three bullying rodents."),
-  m("sintel", "Sintel", "Sintel", 2010, ["Animation", "Fantasy", "Adventure"], "Feature Shorts", 15, 7.5, "Epic", "A lone girl searches the wilderness for the baby dragon she raised."),
-  m("tos", "TearsOfSteel", "Tears of Steel", 2012, ["Sci-Fi", "Action"], "Feature Shorts", 12, 6.3, "Intense", "Warriors and scientists try to save the world from destructive robots in Amsterdam."),
-  m("ed", "ElephantsDream", "Elephants Dream", 2006, ["Animation", "Sci-Fi", "Surreal"], "Feature Shorts", 11, 6.5, "Weird", "Two men explore a vast, mechanical, surreal machine world."),
-  m("blazes", "ForBiggerBlazes", "For Bigger Blazes", 2014, ["Action", "Fantasy"], "Quick Bites", 1, 5.9, "Hype", "Dragons, fire, and a living room full of drama."),
-  m("escapes", "ForBiggerEscapes", "For Bigger Escapes", 2014, ["Adventure", "Travel"], "Quick Bites", 1, 6.0, "Chill", "Leave the couch behind for a quick escape to somewhere wild."),
-  m("fun", "ForBiggerFun", "For Bigger Fun", 2014, ["Comedy", "Family"], "Quick Bites", 1, 6.1, "Cozy", "A minute of pure silliness on the big screen."),
-  m("joyrides", "ForBiggerJoyrides", "For Bigger Joyrides", 2014, ["Action", "Adventure"], "Quick Bites", 1, 5.8, "Hype", "Speed, stunts and a ridiculous amount of joy."),
-  m("meltdowns", "ForBiggerMeltdowns", "For Bigger Meltdowns", 2014, ["Comedy", "Drama"], "Quick Bites", 1, 5.7, "Chaotic", "When everything goes wrong, make it bigger."),
-  m("subaru", "SubaruOutbackOnStreetAndDirt", "Outback on Street & Dirt", 2014, ["Automotive", "Documentary"], "Motor Club", 10, 6.4, "Chill", "A road-and-trail review of a wagon that refuses to stay clean."),
-  m("gti", "VolkswagenGTIReview", "GTI Review", 2014, ["Automotive", "Documentary"], "Motor Club", 10, 6.2, "Chill", "A hot hatch pushed through city streets and backroads."),
-  m("bullrun", "WeAreGoingOnBullrun", "We Are Going On Bullrun", 2014, ["Automotive", "Action", "Documentary"], "Motor Club", 1, 6.0, "Hype", "A cross-country rally of supercars and questionable decisions."),
-  m("grand", "WhatCarCanYouGetForAGrand", "What Car For A Grand?", 2014, ["Automotive", "Comedy"], "Motor Club", 9, 6.6, "Chaotic", "Three hosts, one thousand dollars, and a lot of rust."),
+  {
+    id: "bbb",
+    title: "Big Buck Bunny",
+    year: 2008,
+    genres: ["Animation", "Comedy", "Family"],
+    category: "Short films",
+    minutes: 10,
+    rating: 7.4,
+    mood: "Cozy",
+    description: "A gentle giant rabbit takes revenge on three bullying rodents.",
+    src: "https://media.w3.org/2010/05/bunny/movie.mp4",
+    thumb: "/posters/bunny.png",
+  },
+  {
+    id: "sintel",
+    title: "Sintel — Trailer",
+    year: 2010,
+    genres: ["Animation", "Fantasy", "Adventure"],
+    category: "Trailers",
+    minutes: 1,
+    rating: 7.5,
+    mood: "Epic",
+    description: "A first look at a girl's journey to find the dragon she raised.",
+    src: "https://download.blender.org/durian/trailer/sintel_trailer-720p.mp4",
+    thumb: "/posters/sintel.png",
+  },
+  {
+    id: "tos",
+    title: "Tears of Steel",
+    year: 2012,
+    genres: ["Sci-Fi", "Action"],
+    category: "Short films",
+    minutes: 12,
+    rating: 6.3,
+    mood: "Intense",
+    description:
+      "Warriors and scientists try to save the world from destructive robots in Amsterdam.",
+    src: "https://download.blender.org/demo/movies/ToS/tears_of_steel_720p.mov",
+    thumb: "/posters/steel.svg",
+  },
+  {
+    id: "bbb-trailer",
+    title: "Big Buck Bunny — Trailer",
+    year: 2008,
+    genres: ["Animation", "Comedy"],
+    category: "Trailers",
+    minutes: 1,
+    rating: 7.4,
+    mood: "Cozy",
+    description: "A quick taste of a very big rabbit's very bad day.",
+    src: "https://media.w3.org/2010/05/bunny/trailer.mp4",
+    thumb: "/posters/bunny.png",
+  },
 ];
 
 export const GENRES = Array.from(new Set(CATALOG.flatMap((x) => x.genres))).sort();
@@ -53,8 +79,26 @@ export function resolveVideo(id: string | null): Movie | null {
   const found = CATALOG.find((x) => x.id === id);
   if (found) return found;
   if (/^https?:\/\//.test(id)) {
-    const name = decodeURIComponent(id.split("/").pop() ?? "Custom video").replace(/\.[a-z0-9]+$/i, "");
-    return { id, title: name || "Custom video", year: 0, genres: [], category: "Quick Bites", minutes: 0, rating: 0, mood: "", description: "Shared from a link", src: id, thumb: "" };
+    let filename = new URL(id).pathname.split("/").pop() || "Custom video";
+    try {
+      filename = decodeURIComponent(filename);
+    } catch {
+      /* Keep a malformed filename readable. */
+    }
+    const name = filename.replace(/\.[a-z0-9]+$/i, "");
+    return {
+      id,
+      title: name || "Custom video",
+      year: 0,
+      genres: [],
+      category: "Trailers",
+      minutes: 0,
+      rating: 0,
+      mood: "",
+      description: "Shared from a link",
+      src: id,
+      thumb: "",
+    };
   }
   return null;
 }
@@ -69,7 +113,13 @@ export function recommend(signals: string[], exclude: Set<string>, limit = 4): M
     weights.set(`mood:${mv.mood}`, (weights.get(`mood:${mv.mood}`) ?? 0) + 0.5);
   }
   return CATALOG.filter((x) => !exclude.has(x.id))
-    .map((x) => ({ x, s: x.genres.reduce((a, g) => a + (weights.get(g) ?? 0), 0) + (weights.get(`mood:${x.mood}`) ?? 0) + x.rating / 20 }))
+    .map((x) => ({
+      x,
+      s:
+        x.genres.reduce((a, g) => a + (weights.get(g) ?? 0), 0) +
+        (weights.get(`mood:${x.mood}`) ?? 0) +
+        x.rating / 20,
+    }))
     .sort((a, b) => b.s - a.s)
     .slice(0, limit)
     .map((r) => r.x);
