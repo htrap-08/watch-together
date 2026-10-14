@@ -1,4 +1,4 @@
-# Watch Together streaming companion — v0.1 preview
+# Watch Together streaming companion — v0.2 preview
 
 A Manifest V3 extension for desktop Chrome 116+ and Chromium-based Edge.
 The video stays on the streaming service. Every viewer uses their own authorized
@@ -16,12 +16,15 @@ and messages are sent to your configured Watch Together server.
 ## Connect
 
 1. Create a Watch Together room and select **Streaming service**.
-2. Click **Copy extension setup** in the room.
+2. Click **Send room to extension** in the room (v0.2). The setup and nickname are
+   staged for the popup. **Copy extension setup** remains a fallback.
 3. Open a movie/episode on the streaming service and press play once.
 4. Click the extension **on the video tab**, paste the setup, choose a nickname,
-   and connect. Approve access to the selected site, detected player frames, and room server.
+   and connect (the setup is already filled after a website handoff). Approve access to the selected site, detected player frames, and room server.
 5. Each friend repeats this from their own streaming tab and account.
-6. The first streaming participant hosts; host player actions are sent to guests.
+6. Mark **I’m ready** in the popup after opening the host’s title. The first streaming
+   participant hosts; host player actions are sent to ready guests. Use **Intermission**
+   for a shared break; the host resumes once everyone marks ready again.
    Use **Pass host** in the popup to transfer control. Guests must match the host's
    selected page before following playback. The popup can navigate to that page
    only after a user's explicit **Open the host's video** click.
@@ -98,3 +101,7 @@ Chrome service-worker, content-script, and permission guidance:
 https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts
 https://developer.chrome.com/docs/extensions/how-to/web-platform/websockets
 https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions
+
+Website handoff accepts only the production Watch Together room origin and local
+development room pages. It cannot execute scripts, grant video-site permission,
+or connect a tab silently. Refresh the website after reloading an updated extension.

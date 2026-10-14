@@ -2,3 +2,5 @@
 skills-lock.json
 extension/tests
 realtime/*.test.mjs
+
+server/*.test.mjs

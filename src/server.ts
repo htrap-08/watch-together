@@ -47,6 +47,13 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      if (
+        new URL(request.url).pathname === "/api/clubs" ||
+        new URL(request.url).pathname.startsWith("/api/clubs/")
+      ) {
+        const { clubsRequest } = await import("../server/clubs.mjs");
+        return clubsRequest(request);
+      }
       if (new URL(request.url).pathname === "/api/realtime") {
         const { realtimeRequest } = await import("./lib/realtime-server");
         return realtimeRequest(request);

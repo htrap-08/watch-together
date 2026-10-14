@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export type StreamingSnapshot = {
+  intermission?: { name: string; at: number } | null;
   hostId: string;
   target: { service: string; url: string; title: string; key: string } | null;
   playback: { position: number; playing: boolean; at: number; revision: number };
@@ -11,6 +12,7 @@ export type StreamingSnapshot = {
     url: string;
     status: string;
     ad: boolean;
+    ready?: boolean;
   }[];
 };
 export function realtimeEndpoint() {
@@ -27,8 +29,12 @@ export function realtimeEndpoint() {
 }
 export function extensionSetup(room: string) {
   const url = new URL(location.href);
+  const club = url.searchParams.get("club"),
+    screening = url.searchParams.get("screening");
   url.pathname = `/room/${room}`;
   url.search = "watch=stream";
+  if (club) url.searchParams.set("club", club);
+  if (screening) url.searchParams.set("screening", screening);
   url.hash = "";
   return `wt1.${btoa(JSON.stringify({ room, relay: realtimeEndpoint(), roomUrl: url.href }))
     .replace(/\+/g, "-")
@@ -36,6 +42,8 @@ export function extensionSetup(room: string) {
     .replace(/=+$/, "")}`;
 }
 export function useStreamingRoom(room: string, id: string) {
+  const socketRef = useRef<WebSocket | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [snapshot, setSnapshot] = useState<StreamingSnapshot | null>(null);
   const [connection, setConnection] = useState("Connecting");
   useEffect(() => {
@@ -48,6 +56,7 @@ export function useStreamingRoom(room: string, id: string) {
       url.searchParams.set("room", room);
       url.searchParams.set("key", `${id}-stream-view`);
       socket = new WebSocket(url);
+      socketRef.current = socket;
       socket.onopen = () => {
         setConnection("Connected");
         socket?.send(JSON.stringify({ type: "stream_watch", payload: {} }));
@@ -74,6 +83,14 @@ export function useStreamingRoom(room: string, id: string) {
       clearTimeout(retry);
       socket?.close();
     };
-  }, [room, id]);
-  return { snapshot, connection };
+  }, [room, id, attempt]);
+  return {
+    snapshot,
+    connection,
+    retry: () => setAttempt((value) => value + 1),
+    send: (type: string, payload: Record<string, unknown> = {}) => {
+      if (socketRef.current?.readyState === WebSocket.OPEN)
+        socketRef.current.send(JSON.stringify({ type, payload }));
+    },
+  };
 }

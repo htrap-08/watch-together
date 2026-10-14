@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { applyRoomFeature, type Review } from "./room-features";
 import { RealtimeChannel } from "./realtime-channel";
 import {
   acceptHostClaim,
@@ -12,6 +13,8 @@ import {
 
 export type Me = { id: string; name: string; color: string };
 export type Member = Me & {
+  readyFor?: string | null;
+  playerStatus?: string;
   joinedAt: number;
   drift: number | null;
   rtt: number | null;
@@ -37,6 +40,10 @@ export type Poll = {
 export type Reaction = { id: string; emoji: string; userId: string; videoId: string; t: number };
 
 export type RoomState = {
+  started: boolean;
+  ended: boolean;
+  intermission: { by: string; name: string; at: number } | null;
+  reviews: Record<string, Record<string, Review>>;
   hostId: string;
   hostEpoch: number;
   controlMode: "host" | "all";
@@ -53,6 +60,10 @@ type Ev = { type: string; from: string; sentAt: number; [k: string]: unknown };
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 
 export const emptyState = (): RoomState => ({
+  started: false,
+  ended: false,
+  intermission: null,
+  reviews: {},
   hostId: "",
   hostEpoch: 0,
   controlMode: "all",
@@ -86,6 +97,8 @@ export function useRoom(code: string, me: Me | null) {
   const pingLatency = useRef<number[]>([]);
   const driftRef = useRef<number | null>(null);
   const syncedRef = useRef(false);
+  const viewerReady = useRef<string | null>(null);
+  const playerStatus = useRef("Loading player");
   const membersRef = useRef<Member[]>([]);
   const statsListeners = useRef(new Set<() => void>());
 
@@ -143,6 +156,24 @@ export function useRoom(code: string, me: Me | null) {
       const m = meRef.current;
       if (!m || ev.from === m.id) return;
       const s = stateRef.current;
+      if (applyRoomFeature(s, ev)) {
+        if (ev.type === "break") {
+          viewerReady.current = null;
+          const current = meRef.current;
+          if (current)
+            void chRef.current?.track({
+              ...current,
+              joinedAt: joinedAt.current,
+              readyFor: null,
+              playerStatus: playerStatus.current,
+              status: "watching",
+              drift: driftRef.current,
+              rtt: rttRef.current,
+            });
+        }
+        rerender();
+        return;
+      }
       switch (ev.type) {
         case "sync_req": {
           const hostPresent = membersRef.current.some((x) => x.id === s.hostId);
@@ -163,7 +194,7 @@ export function useRoom(code: string, me: Me | null) {
               { hostId: inc.hostId, epoch: inc.hostEpoch },
             )
           ) {
-            stateRef.current = inc;
+            stateRef.current = { ...emptyState(), ...inc };
             syncedRef.current = true;
             samples.current = [];
             offsetRef.current = (ev.sentAt as number) - Date.now(); // coarse until first pong
@@ -234,6 +265,12 @@ export function useRoom(code: string, me: Me | null) {
           ) {
             const changedVideo = inc.videoId !== s.playback.videoId;
             s.playback = inc;
+            if (changedVideo || ev["reset"] === true) {
+              s.started = false;
+              s.ended = false;
+              s.intermission = null;
+              viewerReady.current = null;
+            }
             if (changedVideo && inc.videoId)
               s.history = [...s.history.filter((h) => h !== inc.videoId), inc.videoId].slice(-20);
             rerender();
@@ -321,6 +358,8 @@ export function useRoom(code: string, me: Me | null) {
     if (!me) return;
     joinedAt.current = Date.now();
     stateRef.current = emptyState();
+    viewerReady.current = null;
+    playerStatus.current = "Loading player";
     syncedRef.current = false;
     const ch = new RealtimeChannel(code, me.id);
     chRef.current = ch;
@@ -361,6 +400,8 @@ export function useRoom(code: string, me: Me | null) {
           drift: null,
           rtt: null,
           status: "watching",
+          readyFor: viewerReady.current,
+          playerStatus: playerStatus.current,
         });
         // ask existing members for state (late join / reconnect)
         send("sync_req");
@@ -409,6 +450,8 @@ export function useRoom(code: string, me: Me | null) {
           drift: driftRef.current,
           rtt: isHost() ? 0 : rttRef.current,
           status: "watching",
+          readyFor: viewerReady.current,
+          playerStatus: playerStatus.current,
         });
       }
       // failover: host disappeared from presence
@@ -436,7 +479,7 @@ export function useRoom(code: string, me: Me | null) {
   const canControl = () => stateRef.current.controlMode === "all" || isHost();
 
   const control = useCallback(
-    (patch: Partial<Playback>, leadMs = 0) => {
+    (patch: Partial<Playback>, leadMs = 0, reset = false) => {
       const m = meRef.current;
       if (!m) return false;
       if (!(stateRef.current.controlMode === "all" || stateRef.current.hostId === m.id))
@@ -454,19 +497,85 @@ export function useRoom(code: string, me: Me | null) {
       };
       if (next.videoId && next.videoId !== s.playback.videoId)
         s.history = [...s.history.filter((h) => h !== next.videoId), next.videoId].slice(-20);
+      if (reset || next.videoId !== s.playback.videoId) {
+        s.started = false;
+        s.ended = false;
+        s.intermission = null;
+        viewerReady.current = null;
+      }
       s.playback = next;
-      send("ctrl", { pb: next });
+      send("ctrl", { pb: next, reset });
       rerender();
       return true;
     },
     [send],
   );
 
+  const trackViewer = () => {
+    const m = meRef.current;
+    if (m)
+      void chRef.current?.track({
+        ...m,
+        joinedAt: joinedAt.current,
+        drift: driftRef.current,
+        rtt: rttRef.current,
+        status: "watching",
+        readyFor: viewerReady.current,
+        playerStatus: playerStatus.current,
+      });
+  };
+  const feature = (type: string, payload: Record<string, unknown> = {}) => {
+    if (type === "break") {
+      viewerReady.current = null;
+      trackViewer();
+    }
+    const m = meRef.current;
+    if (!m) return;
+    applyRoomFeature(stateRef.current, {
+      type,
+      from: m.id,
+      sentAt: hostNow(),
+      name: m.name,
+      ...payload,
+    });
+    send(type, { name: m.name, ...payload });
+    rerender();
+  };
+  const allReady = () =>
+    !!stateRef.current.playback.videoId &&
+    membersRef.current.length > 0 &&
+    membersRef.current.every(
+      (member) =>
+        member.readyFor === stateRef.current.playback.videoId &&
+        member.playerStatus === "Player connected",
+    );
   const api = {
+    setPlayerStatus: (status: string) => {
+      if (playerStatus.current !== status) {
+        playerStatus.current = status;
+        if (status !== "Player connected") viewerReady.current = null;
+        trackViewer();
+      }
+    },
+    setViewerReady: (value: boolean) => {
+      viewerReady.current = value ? stateRef.current.playback.videoId : null;
+      trackViewer();
+    },
+    intermission: () => feature("break"),
+    startScreening: () => {
+      if (!isHost() || !allReady()) return false;
+      feature("screening_start");
+      return control({ playing: true }, 1500);
+    },
+    finish: () => {
+      if (isHost()) feature("film_end", { videoId: stateRef.current.playback.videoId });
+    },
+    review: (score: number, text: string) =>
+      feature("review", { videoId: stateRef.current.playback.videoId, score, text }),
     play: () => control({ playing: true }),
     pause: () => control({ playing: false }),
     seek: (t: number) => control({ position: Math.max(0, t) }),
-    load: (videoId: string) => control({ videoId, position: 0, playing: true }, 600),
+    load: (videoId: string) => control({ videoId, position: 0, playing: false }, 0, true),
     countdownPlay: () => control({ playing: true }, 3500),
     chat: (text: string) => {
       const m = meRef.current;
@@ -517,7 +626,7 @@ export function useRoom(code: string, me: Me | null) {
       const s = stateRef.current;
       const next = [...s.queue].sort((a, b) => b.votes.length - a.votes.length)[0];
       if (!next) return false;
-      if (!control({ videoId: next.videoId, position: 0, playing: true }, 600)) return false;
+      if (!control({ videoId: next.videoId, position: 0, playing: false }, 0, true)) return false;
       commit((st) => (st.queue = st.queue.filter((q) => q.uid !== next.uid)));
       send("q_remove", { uid: next.uid });
       return true;
@@ -598,6 +707,7 @@ export function useRoom(code: string, me: Me | null) {
     hostNow,
     isHost: !!me && stateRef.current.hostId === me.id,
     canControl: canControl(),
+    allReady: allReady(),
     driftRef,
     stats: {
       offset: () => offsetRef.current,

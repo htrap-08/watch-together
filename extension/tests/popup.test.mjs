@@ -9,7 +9,7 @@ const source = (await readFile(new URL("../popup.js", import.meta.url), "utf8"))
   "",
 );
 const flush = () => new Promise((r) => setImmediate(r));
-async function setup(t, granted) {
+async function setup(t, granted, pendingSetup = undefined) {
   const dom = new JSDOM(html, {
     url: "https://extension.example/popup",
     runScripts: "outside-only",
@@ -37,7 +37,10 @@ async function setup(t, granted) {
         return granted;
       },
     },
-    storage: { local: { get: async () => ({ nickname: "Viewer" }), set: async () => {} } },
+    storage: {
+      session: { get: async () => ({ pendingSetup }) },
+      local: { get: async () => ({ nickname: "Viewer" }), set: async () => {} },
+    },
     runtime: {
       sendMessage: async (message) => {
         requests.push(message);
@@ -82,4 +85,15 @@ test("permission refusal leaves the extension disconnected with a visible error"
   );
   assert.match(window.document.querySelector("#error").textContent, /permission/);
   assert.equal(window.document.querySelector("#error").hidden, false);
+});
+
+test("website handoff prefills the room and nickname without requesting video access", async (t) => {
+  const { window, permissions } = await setup(t, true, {
+    setup: "ABC123",
+    name: "From the room",
+    at: Date.now(),
+  });
+  assert.equal(window.document.getElementById("setup-code").value, "ABC123");
+  assert.equal(window.document.getElementById("nickname").value, "From the room");
+  assert.equal(permissions.length, 0);
 });

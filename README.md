@@ -88,3 +88,35 @@ never captured or forwarded.
 
 Commercial service adapters require signed-in testing before claiming verified
 support. This package currently targets desktop Chrome and Edge.
+
+## Film clubs and screening features
+
+- `/clubs` creates and remembers reusable film-club invite links. Redis stores the
+  shared shelf, scheduled screenings, RSVPs, history and reviews without a room TTL.
+- The creator's separate host key is stored in their browser. Save a private copy
+  from the club's Host key & recovery section to restore scheduling privileges on
+  another device. The public invite never contains the host key. Anyone with the
+  invite can view the club, add films, RSVP and review completed screenings; names
+  are not verified accounts. Owner writes, origin checks, bounded input and atomic
+  compare-and-set updates are enforced by the club API.
+- Scheduled screenings use a stable room link and offer an iCalendar download.
+  Dates are shown in the visitor's local timezone. A club host ending the scheduled
+  film records it in history; post-film reviews can then be saved to the club.
+- Direct-video rooms start paused. Each viewer marks ready after their player
+  loads; the host starts or resumes together. Anyone can request an intermission.
+- Theatre mode hides room navigation and the film shelf. Chat can remain visible,
+  stay hidden, or appear only when playback is paused.
+- Companion v0.2 adds a narrowly scoped website handshake. Send room to extension
+  stages the setup, then the user opens the film and clicks the extension to approve
+  site access. No silent installation or permission grant occurs. Existing unpacked
+  users must replace the files, reload the extension and refresh their room.
+- Commercial streaming adapters remain experimental pending signed-in service
+  testing. The compatibility page distinguishes this from fixture-tested HTML5
+  behavior. No protected video is captured or forwarded.
+
+Additional validation:
+
+```sh
+node --test server/clubs.test.mjs
+node --env-file=.env.local --test server/clubs.integration.test.mjs realtime/distributed.test.mjs
+```

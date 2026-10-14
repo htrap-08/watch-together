@@ -93,6 +93,25 @@ test(
     send(host, "track", { name: "Host" });
     await incoming;
     incoming = waitFor(guest, (m) => m.type === "stream_snapshot" && m.payload.hostId === "guest");
+    const breakUpdate = waitFor(
+      guest,
+      (m) => m.type === "stream_snapshot" && m.payload.intermission,
+    );
+    send(guest, "stream_break");
+    assert.equal((await breakUpdate).payload.playback.playing, false);
+    const readyUpdate = waitFor(
+      guest,
+      (m) => m.type === "stream_snapshot" && m.payload.members.every((member) => member.ready),
+    );
+    send(host, "stream_ready", { ready: true });
+    send(guest, "stream_ready", { ready: true });
+    await readyUpdate;
+    const resumed = waitFor(
+      guest,
+      (m) => m.type === "stream_snapshot" && !m.payload.intermission && m.payload.playback.playing,
+    );
+    send(host, "stream_resume");
+    await resumed;
     host.close();
     assert.equal((await incoming).payload.members.length, 1);
   },

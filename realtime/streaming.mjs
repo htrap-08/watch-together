@@ -6,6 +6,8 @@ export function createStreamingRooms({ broadcast, send, now = Date.now }) {
   const roomFor = (code) => {
     if (!rooms.has(code))
       rooms.set(code, {
+        intermission: null,
+        started: false,
         hostId: "",
         target: null,
         playback: { position: 0, playing: false, at: now(), revision: 0 },
@@ -17,6 +19,7 @@ export function createStreamingRooms({ broadcast, send, now = Date.now }) {
   };
   const expected = (pb) => pb.position + (pb.playing ? Math.max(0, now() - pb.at) / 1000 : 0);
   const snapshot = (room) => ({
+    intermission: room.intermission,
     hostId: room.hostId,
     target: room.target,
     playback: room.playback,
@@ -82,10 +85,12 @@ export function createStreamingRooms({ broadcast, send, now = Date.now }) {
         joinedAt: prior?.joinedAt ?? now(),
         status: "Looking for player",
         ad: false,
+        ready: p.features !== 2,
       });
       if (!room.hostId || !room.members.has(room.hostId)) {
         room.hostId = ws.key;
         room.target = target;
+        room.intermission = null;
         room.playback = {
           position: 0,
           playing: false,
@@ -96,6 +101,46 @@ export function createStreamingRooms({ broadcast, send, now = Date.now }) {
       notify(ws.room, room);
     } else if (message.type === "stream_leave") {
       remove(ws);
+    } else if (message.type === "stream_ready") {
+      const member = room.members.get(ws.key);
+      if (!member || member.socket !== ws) return true;
+      member.ready = !!p.ready && member.url === room.target?.url && !member.ad;
+      notify(ws.room, room);
+    } else if (message.type === "stream_break") {
+      if (room.intermission || (!room.members.has(ws.key) && !room.observers.has(ws))) return true;
+      room.intermission = {
+        by: ws.key,
+        name: room.members.get(ws.key)?.name ?? String(p.name ?? "A friend").slice(0, 24),
+        at: now(),
+      };
+      room.playback = {
+        ...room.playback,
+        position: expected(room.playback),
+        playing: false,
+        at: now(),
+        revision: room.playback.revision + 1,
+      };
+      for (const member of room.members.values()) member.ready = false;
+      notify(ws.room, room);
+    } else if (message.type === "stream_resume") {
+      if (ws.key !== room.hostId || room.members.get(ws.key)?.socket !== ws) return true;
+      if (
+        [...room.members.values()].some(
+          (member) => !member.ready || member.url !== room.target?.url || member.ad,
+        )
+      ) {
+        error(ws, "Wait until everyone marks ready on the same title.");
+        return true;
+      }
+      room.intermission = null;
+      room.started = true;
+      room.playback = {
+        ...room.playback,
+        playing: true,
+        at: now(),
+        revision: room.playback.revision + 1,
+      };
+      notify(ws.room, room);
     } else if (message.type === "stream_control") {
       const member = room.members.get(ws.key);
       if (!member || member.socket !== ws || room.hostId !== ws.key) {
@@ -119,6 +164,21 @@ export function createStreamingRooms({ broadcast, send, now = Date.now }) {
         error(ws, "Invalid playback state");
         return true;
       }
+      if (room.intermission) {
+        if (p.playing) error(ws, "Use Resume in the extension after everyone is ready.");
+        return true;
+      }
+      if (
+        p.playing &&
+        !room.started &&
+        [...room.members.values()].some(
+          (member) => !member.ready || member.url !== room.target?.url || member.ad,
+        )
+      ) {
+        error(ws, "Wait until everyone marks ready on the same title.");
+        return true;
+      }
+      if (p.playing) room.started = true;
       room.playback = {
         position: p.position,
         playing: p.playing,
@@ -131,8 +191,12 @@ export function createStreamingRooms({ broadcast, send, now = Date.now }) {
       const target = targetFor(p);
       if (!member || member.socket !== ws || !target) return true;
       member.service = target.service;
+      if (member.url !== target.url) member.ready = false;
       member.url = target.url;
       if (ws.key === room.hostId && target.key !== room.target?.key) {
+        room.intermission = null;
+        room.started = false;
+        for (const viewer of room.members.values()) viewer.ready = false;
         room.target = target;
         room.playback = {
           position: 0,
@@ -149,6 +213,7 @@ export function createStreamingRooms({ broadcast, send, now = Date.now }) {
       if (!member || member.socket !== ws) return true;
       member.status = String(p.status ?? "Connected").slice(0, 100);
       member.ad = !!p.ad;
+      if (member.ad) member.ready = false;
       notify(ws.room, room);
     } else if (message.type === "stream_transfer") {
       if (
@@ -224,6 +289,7 @@ export function createStreamingRooms({ broadcast, send, now = Date.now }) {
     if (!saved) return;
     rooms.set(code, {
       ...saved,
+      started: !!saved.started || saved.playback.playing,
       members: new Map(
         saved.members.map(([id, member]) => [
           id,

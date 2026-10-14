@@ -138,8 +138,13 @@ export function parseSetup(
   const url = new URL(roomUrl);
   if (!["https:", "http:"].includes(url.protocol) || url.username || url.password)
     throw new Error("Invalid room website URL.");
+  const club = url.searchParams.get("club"),
+    screening = url.searchParams.get("screening");
   url.pathname = `/room/${room}`;
   url.search = "watch=stream";
+  if (club && /^[a-zA-Z0-9_-]{20,32}$/.test(club)) url.searchParams.set("club", club);
+  if (screening && /^[a-zA-Z0-9-]{1,64}$/.test(screening))
+    url.searchParams.set("screening", screening);
   url.hash = "";
   return { room, relay: relayUrl(server), roomUrl: url.href };
 }

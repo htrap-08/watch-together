@@ -32,6 +32,13 @@ function render(next) {
   if (!next.session) return;
   const { session, snapshot, connection } = next;
   const host = snapshot?.hostId === session.id;
+  const viewer = snapshot?.members.find((member) => member.id === session.id);
+  $("viewer-ready").textContent = viewer?.ready ? "Ready ✓ · undo" : "I’m ready";
+  $("break-status").textContent = snapshot?.intermission
+    ? "Intermission — " + snapshot.intermission.name
+    : "Mark ready after opening the host’s title.";
+  $("resume-screening").hidden = !host || !snapshot?.intermission;
+
   $("connection").textContent = connection;
   $("role").textContent = host ? "HOST" : "VIEWER";
   $("title").textContent = snapshot?.target?.title ?? "Connecting to your room…";
@@ -148,8 +155,13 @@ $("chat-form").addEventListener(
     $("chat").value = "";
   }),
 );
+const pending = (await chrome.storage.session.get("pendingSetup")).pendingSetup;
+if (pending && Date.now() - pending.at < 3600000) {
+  $("setup-code").value = pending.setup;
+  $("nickname").value = pending.name;
+}
 const stored = await chrome.storage.local.get("nickname");
-$("nickname").value = stored.nickname ?? "";
+$("nickname").value = $("nickname").value || stored.nickname || "";
 try {
   render(await request("WT_STATUS"));
 } catch (e) {
@@ -160,3 +172,20 @@ setInterval(() => {
     .then(render)
     .catch((e) => error(e.message));
 }, 1000);
+
+$("viewer-ready").addEventListener(
+  "click",
+  action(() =>
+    request("WT_READY", {
+      ready: !state.snapshot?.members.find((member) => member.id === state.session?.id)?.ready,
+    }),
+  ),
+);
+$("take-break").addEventListener(
+  "click",
+  action(() => request("WT_BREAK")),
+);
+$("resume-screening").addEventListener(
+  "click",
+  action(() => request("WT_RESUME")),
+);

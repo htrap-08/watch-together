@@ -79,7 +79,7 @@ function apply(takingHost = false) {
     updateStatus("Waiting for advertisements to finish", !!report.ad);
     return;
   }
-  if (snapshot.hostId === session.id && !takingHost) return;
+  if (snapshot.hostId === session.id && !takingHost && !snapshot.intermission) return;
   void sendToPlayer("WT_APPLY", {
     position: expectedPosition(snapshot.playback, Date.now() + offset),
     playing: snapshot.playback.playing,
@@ -113,6 +113,7 @@ function connect() {
       url: session.url,
       service: session.service.name,
       title: session.title,
+      features: 2,
     });
     write("stream_ping", { t0: Date.now() });
     heartbeat = setInterval(() => {
@@ -131,8 +132,13 @@ function connect() {
     }
     if (msg.type === "stream_snapshot") {
       const previousHost = snapshot?.hostId;
+      const previousBreak = snapshot?.intermission;
       snapshot = msg.payload;
-      apply(!!previousHost && previousHost !== session?.id && snapshot.hostId === session?.id);
+      apply(
+        !!snapshot.intermission ||
+          !!previousBreak ||
+          (!!previousHost && previousHost !== session?.id && snapshot.hostId === session?.id),
+      );
       badge();
     }
     if (msg.type === "stream_pong") {
@@ -142,7 +148,10 @@ function connect() {
         offset = msg.payload.serverTime - (msg.payload.t0 + Date.now()) / 2;
       }
     }
-    if (msg.type === "stream_error") updateStatus(msg.payload.reason);
+    if (msg.type === "stream_error") {
+      updateStatus(msg.payload.reason);
+      apply(true);
+    }
     if (msg.type === "broadcast" && msg.payload?.type === "chat" && snapshot) {
       const chat = msg.payload.msg;
       if (
@@ -325,6 +334,34 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   const extensionPage = sender.id === chrome.runtime.id && !sender.tab;
   (async () => {
     await restore();
+    if (message.type === "WT_SITE_HELLO" || message.type === "WT_SITE_PREPARE") {
+      const source = new URL(sender.url ?? "about:blank");
+      const allowed =
+        source.origin === "https://watch-together-lyart.vercel.app" ||
+        (["localhost", "127.0.0.1"].includes(source.hostname) && source.protocol === "http:");
+      if (!sender.tab || !allowed || !/^\/room\/[a-zA-Z0-9]{6}$/.test(source.pathname))
+        throw new Error("This request must come from a Watch Together room.");
+      if (message.type === "WT_SITE_HELLO")
+        return { version: chrome.runtime.getManifest().version };
+      const pending = message.payload;
+      const config = parseSetup(pending.setup);
+      if (
+        new URL(config.roomUrl).origin !== source.origin ||
+        config.room !== source.pathname.split("/")[2].toUpperCase()
+      )
+        throw new Error("Room details do not match this page.");
+      const relay = new URL(config.relay);
+      if (relay.hostname !== source.hostname)
+        throw new Error("Use the room server for this website.");
+      await chrome.storage.session.set({
+        pendingSetup: {
+          setup: String(pending.setup).slice(0, 3000),
+          name: String(pending.name ?? "").slice(0, 24),
+          at: Date.now(),
+        },
+      });
+      return { version: chrome.runtime.getManifest().version };
+    }
     if (message.type === "WT_HELLO" && sender.tab?.id === session?.tabId) {
       const frameService = serviceFor(sender.url ?? session.url);
       if (["Netflix", "YouTube"].includes(frameService.name))
@@ -342,11 +379,27 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       return { ok: true };
     }
     if (!extensionPage) throw new Error("This action is only available in the extension popup.");
-    if (message.type === "WT_CONNECT") return await attach(message.payload);
+    if (message.type === "WT_CONNECT") {
+      const result = await attach(message.payload);
+      await chrome.storage.session.remove("pendingSetup");
+      return result;
+    }
     if (message.type === "WT_STATUS") return view();
     if (message.type === "WT_DISCONNECT") {
       await disconnect();
       return view();
+    }
+    if (message.type === "WT_READY") {
+      write("stream_ready", { ready: !!message.payload.ready });
+      return { ok: true };
+    }
+    if (message.type === "WT_BREAK") {
+      write("stream_break", {});
+      return { ok: true };
+    }
+    if (message.type === "WT_RESUME") {
+      write("stream_resume", {});
+      return { ok: true };
     }
     if (message.type === "WT_CHAT") {
       write("stream_chat", { text: String(message.payload.text ?? "").slice(0, 500) });

@@ -27,9 +27,12 @@
         <details>
           <summary>Server settings</summary>
           <label for="relay">Realtime server</label
-          ><input id="relay" type="text" value="ws://localhost:3001" /><label for="room-site"
-            >Room website</label
-          ><input id="room-site" type="url" value="http://localhost:3000" />
+          ><input
+            id="relay"
+            type="text"
+            value="wss://watch-together-lyart.vercel.app/api/realtime"
+          /><label for="room-site">Room website</label
+          ><input id="room-site" type="url" value="https://watch-together-lyart.vercel.app" />
         </details>
         <button type="submit" id="connect">Connect this video tab</button
         ><small
@@ -49,6 +52,12 @@
         ><button id="open-room" class="secondary">Open room</button>
       </div>
       <div id="members"></div>
+      <p id="break-status" role="status"></p>
+      <div class="actions">
+        <button id="viewer-ready" class="secondary">I’m ready</button
+        ><button id="take-break" class="secondary">Intermission</button>
+      </div>
+      <button id="resume-screening" hidden>Resume when everyone is ready</button>
       <h2>Room chat</h2>
       <div id="messages" role="log" aria-label="Room messages"></div>
       <form id="chat-form">

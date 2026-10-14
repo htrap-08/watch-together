@@ -1,10 +1,37 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Copy, Download, ExternalLink, MonitorPlay, Users } from "lucide-react";
+import { extensionMessage } from "@/lib/extension-bridge";
 import { extensionSetup, useStreamingRoom } from "@/lib/streaming";
 
-export function StreamingPanel({ code, id }: { code: string; id: string }) {
-  const { snapshot, connection } = useStreamingRoom(code, id);
+export function StreamingPanel({
+  code,
+  id,
+  name,
+  onPlaying,
+}: {
+  code: string;
+  id: string;
+  name: string;
+  onPlaying?: (playing: boolean) => void;
+}) {
+  const { snapshot, connection, retry, send } = useStreamingRoom(code, id);
+  useEffect(() => {
+    onPlaying?.(connection === "Connected" && !!snapshot?.playback.playing);
+  }, [snapshot?.playback.playing, connection, onPlaying]);
+  const [extension, setExtension] = useState<string | null>(null);
+  const [handoff, setHandoff] = useState("");
+  useEffect(() => {
+    let active = true;
+    void extensionMessage("hello")
+      .then((result) => {
+        if (active) setExtension(result.version ?? "0.2");
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
   const [copied, setCopied] = useState(false);
   const [manual, setManual] = useState(false);
   const [setup, setSetup] = useState("");
@@ -44,8 +71,32 @@ export function StreamingPanel({ code, id }: { code: string; id: string }) {
         <div>
           <span>02</span>
           <h3>Connect your video tab</h3>
-          <p>Open your film, click the extension, and paste this room’s setup.</p>
-          <button className="action-primary" onClick={() => void copy()}>
+          <p>
+            Send the room below, then open your film and click the extension. Copying the setup
+            still works as a fallback.
+          </p>
+          <button
+            className="action-primary"
+            onClick={() =>
+              void extensionMessage("prepare", { setup: extensionSetup(code), name })
+                .then((result) => {
+                  setExtension(result.version ?? "0.2");
+                  setHandoff(
+                    "Room sent. Open your film, click the extension, and choose Connect this video tab.",
+                  );
+                })
+                .catch((error) => setHandoff(error.message))
+            }
+          >
+            Send room to extension
+          </button>
+          <p className="feature-muted">
+            {extension
+              ? "Extension v" + extension + " detected."
+              : "Use companion v0.2 for the copy-free setup."}
+          </p>
+          {handoff && <p role="status">{handoff}</p>}
+          <button className="action-secondary" onClick={() => void copy()}>
             {copied ? <Check size={14} /> : <Copy size={14} />}
             {copied ? "Setup copied" : "Copy extension setup"}
           </button>
@@ -64,6 +115,16 @@ export function StreamingPanel({ code, id }: { code: string; id: string }) {
           Copy this setup manually
           <textarea readOnly value={setup} onFocus={(event) => event.target.select()} />
         </label>
+      )}
+      {connection !== "Connected" && (
+        <div className="feature-recovery" role="status">
+          <p>
+            Room connection interrupted. Your streaming accounts and video stay on their own sites.
+          </p>
+          <button className="feature-button" onClick={retry}>
+            Reconnect room
+          </button>
+        </div>
       )}
       <div className="streaming-session">
         <div className="streaming-session-title">
@@ -96,6 +157,31 @@ export function StreamingPanel({ code, id }: { code: string; id: string }) {
             <p>Connect the extension from your video page. Nothing is screen-shared or uploaded.</p>
           </>
         )}
+        {snapshot?.intermission && (
+          <p className="feature-notice" role="status">
+            Intermission requested by {snapshot.intermission.name}. Mark ready in the extension; the
+            host can resume once everyone is ready.
+          </p>
+        )}
+        {!!snapshot?.members.length && (
+          <div className="streaming-ready-summary">
+            <p>
+              {
+                snapshot.members.filter(
+                  (member) => member.ready && member.url === snapshot.target?.url && !member.ad,
+                ).length
+              }{" "}
+              / {snapshot.members.length} ready
+            </p>
+            <button
+              className="feature-button"
+              onClick={() => send("stream_break", { name })}
+              disabled={!!snapshot.intermission}
+            >
+              Request intermission
+            </button>
+          </div>
+        )}
         {!!snapshot?.members.length && (
           <ul className="streaming-members">
             {snapshot.members.map((member) => (
@@ -104,7 +190,15 @@ export function StreamingPanel({ code, id }: { code: string; id: string }) {
                   {member.name}
                   {member.id === snapshot.hostId ? " · host" : ""}
                 </b>
-                <span>{member.status}</span>
+                <span>
+                  {member.url !== snapshot.target?.url
+                    ? "Different title — open the host’s film"
+                    : member.ad
+                      ? "Advertisement — waiting"
+                      : member.ready
+                        ? "Ready"
+                        : member.status + " · not marked ready"}
+                </span>
               </li>
             ))}
           </ul>

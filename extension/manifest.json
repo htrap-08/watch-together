@@ -1,12 +1,31 @@
 {
   "manifest_version": 3,
-  "name": "Watch Together — Streaming Companion",
-  "version": "0.1.0",
+  "name": "Watch Together \u2014 Streaming Companion",
+  "version": "0.2.0",
   "minimum_chrome_version": "116",
   "description": "Connect the current video tab to your Watch Together room. Everyone streams from their own account.",
   "permissions": ["activeTab", "scripting", "storage"],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
-  "background": { "service_worker": "background.js", "type": "module" },
-  "action": { "default_popup": "popup.html", "default_title": "Watch Together" },
-  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'self'" }
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Watch Together"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://watch-together-lyart.vercel.app/room/*",
+        "http://localhost/room/*",
+        "http://127.0.0.1/room/*"
+      ],
+      "js": ["site-bridge.js"],
+      "run_at": "document_idle"
+    }
+  ]
 }

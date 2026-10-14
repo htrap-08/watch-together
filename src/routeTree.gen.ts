@@ -10,13 +10,20 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ClubsRouteImport } from './routes/clubs'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as StreamingRouteImport } from './routes/streaming'
+import { Route as ClubIdRouteImport } from './routes/club.$id'
 import { Route as RoomCodeRouteImport } from './routes/room.$code'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClubsRoute = ClubsRouteImport.update({
+  id: '/clubs',
+  path: '/clubs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsRoute = DocsRouteImport.update({
@@ -29,6 +36,11 @@ const StreamingRoute = StreamingRouteImport.update({
   path: '/streaming',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClubIdRoute = ClubIdRouteImport.update({
+  id: '/club/$id',
+  path: '/club/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RoomCodeRoute = RoomCodeRouteImport.update({
   id: '/room/$code',
   path: '/room/$code',
@@ -37,35 +49,51 @@ const RoomCodeRoute = RoomCodeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/clubs': typeof ClubsRoute
   '/docs': typeof DocsRoute
   '/streaming': typeof StreamingRoute
+  '/club/$id': typeof ClubIdRoute
   '/room/$code': typeof RoomCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/clubs': typeof ClubsRoute
   '/docs': typeof DocsRoute
   '/streaming': typeof StreamingRoute
+  '/club/$id': typeof ClubIdRoute
   '/room/$code': typeof RoomCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/clubs': typeof ClubsRoute
   '/docs': typeof DocsRoute
   '/streaming': typeof StreamingRoute
+  '/club/$id': typeof ClubIdRoute
   '/room/$code': typeof RoomCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/docs' | '/streaming' | '/room/$code'
+  fullPaths:
+    '/' | '/clubs' | '/docs' | '/streaming' | '/club/$id' | '/room/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/docs' | '/streaming' | '/room/$code'
-  id: '__root__' | '/' | '/docs' | '/streaming' | '/room/$code'
+  to: '/' | '/clubs' | '/docs' | '/streaming' | '/club/$id' | '/room/$code'
+  id:
+    | '__root__'
+    | '/'
+    | '/clubs'
+    | '/docs'
+    | '/streaming'
+    | '/club/$id'
+    | '/room/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ClubsRoute: typeof ClubsRoute
   DocsRoute: typeof DocsRoute
   StreamingRoute: typeof StreamingRoute
+  ClubIdRoute: typeof ClubIdRoute
   RoomCodeRoute: typeof RoomCodeRoute
 }
 
@@ -76,6 +104,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clubs': {
+      id: '/clubs'
+      path: '/clubs'
+      fullPath: '/clubs'
+      preLoaderRoute: typeof ClubsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs': {
@@ -92,6 +127,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StreamingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/club/$id': {
+      id: '/club/$id'
+      path: '/club/$id'
+      fullPath: '/club/$id'
+      preLoaderRoute: typeof ClubIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/room/$code': {
       id: '/room/$code'
       path: '/room/$code'
@@ -104,8 +146,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ClubsRoute: ClubsRoute,
   DocsRoute: DocsRoute,
   StreamingRoute: StreamingRoute,
+  ClubIdRoute: ClubIdRoute,
   RoomCodeRoute: RoomCodeRoute,
 }
 export const routeTree = rootRouteImport

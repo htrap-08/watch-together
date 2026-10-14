@@ -170,3 +170,62 @@ test("separate rooms remain isolated and noisy clients are disconnected", async 
   for (let i = 0; i < 65; i++) send(noisy, "stream_ping", { t0: Date.now() });
   assert.equal((await closed)[0], 1008);
 });
+
+test("new companions wait for readiness; intermission pauses all players and only the host resumes", async (t) => {
+  const connect = await fixture(t);
+  const host = await connect("ready-host");
+  const guest = await connect("ready-guest");
+  async function joinNew(ws, name) {
+    const update = waitFor(
+      ws,
+      (m) => m.type === "stream_snapshot" && m.payload.members.some((x) => x.name === name),
+    );
+    send(ws, "stream_join", {
+      name,
+      url: "https://www.netflix.com/watch/321",
+      service: "Netflix",
+      features: 2,
+    });
+    return (await update).payload;
+  }
+  await joinNew(host, "Host");
+  await joinNew(guest, "Guest");
+  let update = waitFor(host, (m) => m.type === "stream_error");
+  send(host, "stream_control", { position: 5, playing: true });
+  assert.match((await update).payload.reason, /ready/);
+  update = waitFor(
+    guest,
+    (m) => m.type === "stream_snapshot" && m.payload.members.every((x) => x.ready),
+  );
+  send(host, "stream_ready", { ready: true });
+  send(guest, "stream_ready", { ready: true });
+  await update;
+  update = waitFor(guest, (m) => m.type === "stream_snapshot" && m.payload.playback.playing);
+  send(host, "stream_control", { position: 5, playing: true });
+  await update;
+  update = waitFor(host, (m) => m.type === "stream_snapshot" && m.payload.intermission);
+  send(guest, "stream_break");
+  const paused = (await update).payload;
+  assert.equal(paused.playback.playing, false);
+  assert.equal(paused.intermission.name, "Guest");
+  assert.equal(
+    paused.members.some((x) => x.ready),
+    false,
+  );
+  update = waitFor(host, (m) => m.type === "stream_error");
+  send(host, "stream_resume");
+  assert.match((await update).payload.reason, /ready/);
+  update = waitFor(
+    guest,
+    (m) => m.type === "stream_snapshot" && m.payload.members.every((x) => x.ready),
+  );
+  send(host, "stream_ready", { ready: true });
+  send(guest, "stream_ready", { ready: true });
+  await update;
+  update = waitFor(
+    guest,
+    (m) => m.type === "stream_snapshot" && !m.payload.intermission && m.payload.playback.playing,
+  );
+  send(host, "stream_resume");
+  await update;
+});

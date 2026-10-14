@@ -8,6 +8,7 @@ import {
   Copy,
   Crown,
   Expand,
+  Monitor,
   Film,
   ListPlus,
   MessageCircle,
@@ -30,11 +31,26 @@ import { fuzzyScore } from "@/lib/fuzzy";
 import { loadMe, saveMe } from "@/lib/identity";
 import { useRoom, type Me } from "@/lib/room-engine";
 import { correctionFor, expectedPosition, shouldBePlaying } from "@/lib/sync";
+import {
+  ReadyLobby,
+  RoomRecovery,
+  ScreeningActions,
+  AfterCredits,
+} from "@/components/room-features";
+import { RoomClub } from "@/components/room-club";
+import { useClub, clubAction } from "@/lib/clubs";
 import { StreamingPanel } from "@/components/streaming-panel";
 
 export const Route = createFileRoute("/room/$code")({
-  validateSearch: (search): { watch?: "stream" } =>
-    search["watch"] === "stream" ? { watch: "stream" } : {},
+  validateSearch: (search): { watch?: "stream"; club?: string; screening?: string } => ({
+    ...(search["watch"] === "stream" ? { watch: "stream" as const } : {}),
+    ...(typeof search["club"] === "string" && /^[a-zA-Z0-9_-]{20,32}$/.test(search["club"])
+      ? { club: search["club"] }
+      : {}),
+    ...(typeof search["screening"] === "string" && /^[a-zA-Z0-9-]{1,64}$/.test(search["screening"])
+      ? { screening: search["screening"] }
+      : {}),
+  }),
   head: ({ params }) => ({
     meta: [
       { title: `Room ${params.code} — Watch Together` },
@@ -51,17 +67,26 @@ const formatTime = (seconds: number) =>
 
 function Room() {
   const { code } = Route.useParams();
-  const { watch } = Route.useSearch();
+  const { watch, club: clubId, screening: screeningId } = Route.useSearch();
+  const { club, error: clubError, setClub } = useClub(clubId);
+  const scheduled = club?.screenings.find((item) => item.id === screeningId);
   const nav = useNavigate();
   const watchMode = watch === "stream" ? "stream" : "direct";
   const setWatchMode = (mode: "direct" | "stream") => {
     void nav({
       to: "/room/$code",
       params: { code },
-      search: mode === "stream" ? { watch: "stream" } : {},
+      search: {
+        ...(clubId ? { club: clubId } : {}),
+        ...(screeningId ? { screening: screeningId } : {}),
+        ...(mode === "stream" ? { watch: "stream" as const } : {}),
+      },
       replace: true,
     });
   };
+  const [streamingPlaying, setStreamingPlaying] = useState(false);
+  const [theatre, setTheatre] = useState(false);
+  const [chatView, setChatView] = useState<"always" | "paused" | "hidden">("always");
   const [me, setMe] = useState<Me | null>(null);
   const [name, setName] = useState("");
   useEffect(() => setMe(loadMe()), []);
@@ -94,16 +119,33 @@ function Room() {
 
   useEffect(() => {
     if (watchMode === "stream" || !room.ready || !room.isHost || initialLoaded.current) return;
+    if (clubId && screeningId && !scheduled) return;
     initialLoaded.current = true;
     if (room.state.playback.videoId) return;
+    if (scheduled?.film.source === "direct") {
+      room.api.load(
+        CATALOG.find((film) => film.src === scheduled.film.url)?.id ?? scheduled.film.url,
+      );
+      return;
+    }
     const first = sessionStorage.getItem("watchparty:first-video");
     sessionStorage.removeItem("watchparty:first-video");
     if (first && CATALOG.some((film) => film.id === first)) room.api.load(first);
-  }, [room.ready, room.isHost, room.state.playback.videoId, room.api, watchMode]);
+  }, [
+    room.ready,
+    room.isHost,
+    room.state.playback.videoId,
+    room.api,
+    watchMode,
+    scheduled,
+    clubId,
+    screeningId,
+  ]);
 
   useEffect(() => {
     if (watchMode === "stream") {
       v.current?.pause();
+      room.api.setPlayerStatus("Streaming mode — choose video links to join this player");
       return;
     }
     const id = setInterval(() => {
@@ -113,6 +155,7 @@ function Room() {
       if (!el || !vid) return;
       if (el.src !== vid.src) {
         el.src = vid.src;
+        room.api.setPlayerStatus("Loading player");
         setMediaError("");
         setNeedsPlay(false);
         return;
@@ -214,12 +257,33 @@ function Room() {
     3,
   );
   return (
-    <main className="room-page club-room">
+    <main
+      className={`room-page club-room ${theatre ? "theatre-mode" : ""} ${chatView === "hidden" || (chatView === "paused" && (watchMode === "stream" ? streamingPlaying : room.state.playback.playing)) ? "chat-hidden" : ""}`}
+    >
       <header className="room-header">
         <Link to="/" className="club-wordmark">
           watch <em>together</em>
           <span aria-hidden="true">✳</span>
         </Link>
+        <div className="theatre-tools">
+          <button
+            className="feature-button"
+            aria-pressed={theatre}
+            onClick={() => setTheatre((value) => !value)}
+          >
+            <Monitor size={14} />
+            {theatre ? "Exit theatre" : "Theatre mode"}
+          </button>
+          <select
+            aria-label="Chat visibility"
+            value={chatView}
+            onChange={(event) => setChatView(event.target.value as typeof chatView)}
+          >
+            <option value="always">Keep chat open</option>
+            <option value="paused">Chat when paused</option>
+            <option value="hidden">Hide chat</option>
+          </select>
+        </div>
         <div className="room-header-info">
           <span className={`connection ${connected ? "" : "offline"}`}>
             <i /> {connected ? "Room live" : room.status === "live" ? "Getting ready" : room.status}
@@ -235,6 +299,20 @@ function Room() {
         <div className="notice" role="status">
           {notice}
         </div>
+      )}
+      <RoomRecovery room={room} />
+      {clubError && (
+        <p role="alert" className="feature-recovery">
+          {clubError}
+        </p>
+      )}
+      {club && (
+        <RoomClub
+          club={club}
+          screening={scheduled}
+          ended={room.state.ended && (!scheduled || movie?.src === scheduled.film.url)}
+          onUpdate={setClub}
+        />
       )}
       <div className="room-layout">
         <section className="watch-column">
@@ -264,9 +342,10 @@ function Room() {
             </button>
           </div>
           {watchMode === "stream" ? (
-            <StreamingPanel code={code} id={me.id} />
+            <StreamingPanel code={code} id={me.id} name={me.name} onPlaying={setStreamingPlaying} />
           ) : (
             <>
+              <ReadyLobby room={room} me={me} />
               <div ref={screen} className="player-screen">
                 <video
                   ref={v}
@@ -276,16 +355,15 @@ function Room() {
                   onDurationChange={() =>
                     setDuration(Number.isFinite(v.current?.duration) ? v.current!.duration : 0)
                   }
-                  onError={() =>
+                  onCanPlay={() => room.api.setPlayerStatus("Player connected")}
+                  onError={() => {
+                    room.api.setPlayerStatus("Player could not load");
                     setMediaError(
                       "This video couldn’t load. Try another film or check the video link.",
-                    )
-                  }
+                    );
+                  }}
                   onEnded={() => {
-                    if (room.canControl) {
-                      room.api.pause();
-                      if (s.queue.length) room.api.playNext();
-                    }
+                    room.api.finish();
                   }}
                 />
                 {!movie && (
@@ -357,8 +435,19 @@ function Room() {
                   <button
                     className="play-control"
                     aria-label={s.playback.playing ? "Pause for everyone" : "Play for everyone"}
-                    disabled={!controls}
-                    onClick={() => (s.playback.playing ? room.api.pause() : room.api.play())}
+                    disabled={
+                      !controls ||
+                      !!s.intermission ||
+                      (!s.started && (!room.allReady || !room.isHost)) ||
+                      s.ended
+                    }
+                    onClick={() =>
+                      s.playback.playing
+                        ? room.api.pause()
+                        : !s.started
+                          ? room.api.startScreening()
+                          : room.api.play()
+                    }
                   >
                     {s.playback.playing ? (
                       <Pause size={18} fill="currentColor" />
@@ -387,7 +476,11 @@ function Room() {
                   <button
                     className="countdown-control"
                     disabled={!controls}
-                    onClick={() => room.api.countdownPlay()}
+                    onClick={() =>
+                      !s.started || s.intermission
+                        ? room.api.startScreening()
+                        : room.api.countdownPlay()
+                    }
                   >
                     3 · 2 · 1 start
                   </button>
@@ -453,6 +546,24 @@ function Room() {
                   to the queue.
                 </p>
               )}
+              <ScreeningActions room={room} />
+              <AfterCredits
+                room={room}
+                me={me}
+                onSave={
+                  scheduled && club && movie?.src === scheduled.film.url
+                    ? async (score, text) => {
+                        await clubAction(club.id, {
+                          type: "review",
+                          screeningId: scheduled.id,
+                          name: me.name,
+                          score,
+                          text,
+                        });
+                      }
+                    : undefined
+                }
+              />
               <details className="room-library" id="room-discover">
                 <summary>
                   Browse films & add a video <Plus size={16} />

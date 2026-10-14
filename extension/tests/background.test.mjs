@@ -35,6 +35,7 @@ test("worker connects, applies remote controls to the selected frame, shares cha
   globalThis.chrome = {
     runtime: {
       id: "test-extension",
+      getManifest: () => ({ version: "0.2.0" }),
       onMessage: { addListener: (fn) => handlers.push(fn) },
       onStartup: { addListener: () => {} },
     },
@@ -67,6 +68,36 @@ test("worker connects, applies remote controls to the selected frame, shares cha
   let handler = handlers.at(-1);
   const request = (type, payload, from = sender) =>
     new Promise((resolve) => handler({ type, payload }, from, resolve));
+  const website = {
+    id: "test-extension",
+    tab: { id: 55 },
+    url: "https://watch-together-lyart.vercel.app/room/ABC123",
+  };
+  const token =
+    "wt1." +
+    Buffer.from(
+      JSON.stringify({
+        room: "ABC123",
+        relay: "wss://watch-together-lyart.vercel.app/api/realtime",
+        roomUrl: website.url,
+      }),
+    ).toString("base64url");
+  assert.equal((await request("WT_SITE_HELLO", {}, website)).result.version, "0.2.0");
+  assert.equal(
+    (await request("WT_SITE_PREPARE", { setup: token, name: "Guest" }, website)).ok,
+    true,
+  );
+  assert.equal(sessionStore.pendingSetup.setup, token);
+  assert.equal(
+    (
+      await request(
+        "WT_SITE_PREPARE",
+        { setup: token, name: "Guest" },
+        { ...website, url: "https://evil.example/room/ABC123" },
+      )
+    ).ok,
+    false,
+  );
   const relay = `ws://127.0.0.1:${server.address().port}`;
   const host = new WebSocket(`${relay}?room=ABC123&key=external-host`);
   await once(host, "open");

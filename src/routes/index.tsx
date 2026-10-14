@@ -47,7 +47,7 @@ function Index() {
           <span aria-hidden="true">✳</span>
         </Link>
         <nav aria-label="Main navigation">
-          <a href="#films">The film shelf</a>
+          <Link to="/clubs">Film clubs</Link>
           <Link to="/streaming">Extension & help</Link>
         </nav>
       </header>

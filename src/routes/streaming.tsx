@@ -39,10 +39,11 @@ function Streaming() {
           coordinates playback with your room, without capturing or forwarding the protected video.
         </p>
         <a className="action-primary" href="/watch-together-extension.zip" download>
-          <Download size={16} /> Download extension · v0.1 preview
+          <Download size={16} /> Download extension · v0.2 preview
         </a>
         <small>
-          Desktop Chrome 116+ and Chromium-based Edge. Not published to a browser store yet.
+          Existing users: replace the extracted files, reload the extension, then refresh the room
+          page. Desktop Chrome 116+ and Chromium-based Edge. Not published to a browser store yet.
         </small>
       </section>
       <section className="guide-section">
@@ -73,7 +74,10 @@ function Streaming() {
         <ol>
           <li>
             <b>Create a room and choose “Streaming service”.</b>
-            <p>Click “Copy extension setup”. Send your friends the room invite link.</p>
+            <p>
+              Click “Send room to extension” to load the setup automatically. Copying the setup
+              still works as a fallback. Send your friends the room invite link.
+            </p>
           </li>
           <li>
             <b>Open the same title on your service.</b>
@@ -85,16 +89,17 @@ function Streaming() {
           <li>
             <b>Click the extension on that video tab.</b>
             <p>
-              Paste the setup, choose your nickname, and connect. The extension requests access to
-              that site and your realtime server.
+              The room and nickname will already be filled after the handoff. Choose Connect, then
+              mark “I’m ready” once the player is found. The extension requests access to that site
+              and your realtime server.
             </p>
           </li>
           <li>
             <b>The first streaming viewer hosts.</b>
             <p>
-              Play, pause, or seek using the host’s normal player controls. Guests follow
-              automatically. Chat in the extension or this website. The host can pass control from
-              the extension popup.
+              Start once everyone has marked ready. Play, pause, or seek using the host’s normal
+              player controls. Guests follow automatically. Chat in the extension or this website.
+              The host can pass control from the extension popup.
             </p>
           </li>
         </ol>
@@ -117,17 +122,25 @@ function Streaming() {
             </span>
           </div>
           <div>
-            <b>Prime Video / Disney+ / Hulu / Max</b>
+            <b>
+              Prime Video / Disney+ / Hulu / Max{" "}
+              <small className="compat-status">Experimental</small>
+            </b>
             <span>
               HTML5 player selectors and ad detection hooks. Needs signed-in service testing.
             </span>
           </div>
           <div>
-            <b>Apple TV+ / Paramount+ / Crunchyroll / Vimeo</b>
+            <b>
+              Apple TV+ / Paramount+ / Crunchyroll / Vimeo{" "}
+              <small className="compat-status">Experimental</small>
+            </b>
             <span>HTML5 player discovery. Needs service testing.</span>
           </div>
           <div>
-            <b>Other video websites</b>
+            <b>
+              Other video websites <small className="compat-status">HTML5 fixture-tested</small>
+            </b>
             <span>
               Generic HTML5 adapter. Validated using local video fixtures; site-specific behavior
               can vary.
