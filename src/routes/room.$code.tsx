@@ -16,7 +16,6 @@ import {
   Play,
   Plus,
   Radio,
-  Search,
   Send,
   SkipForward,
   ThumbsUp,
@@ -26,8 +25,8 @@ import {
   VolumeX,
   Vote,
 } from "lucide-react";
-import { CATALOG, CATEGORIES, recommend, resolveVideo } from "@/lib/catalog";
-import { fuzzyScore } from "@/lib/fuzzy";
+import { resolveVideo } from "@/lib/catalog";
+import { ScreenSharePanel } from "@/components/screen-share-panel";
 import { loadMe, saveMe } from "@/lib/identity";
 import { useRoom, type Me } from "@/lib/room-engine";
 import { correctionFor, expectedPosition, shouldBePlaying } from "@/lib/sync";
@@ -42,8 +41,10 @@ import { useClub, clubAction } from "@/lib/clubs";
 import { StreamingPanel } from "@/components/streaming-panel";
 
 export const Route = createFileRoute("/room/$code")({
-  validateSearch: (search): { watch?: "stream"; club?: string; screening?: string } => ({
-    ...(search["watch"] === "stream" ? { watch: "stream" as const } : {}),
+  validateSearch: (search): { watch?: "stream" | "share"; club?: string; screening?: string } => ({
+    ...(search["watch"] === "stream" || search["watch"] === "share"
+      ? { watch: search["watch"] as "stream" | "share" }
+      : {}),
     ...(typeof search["club"] === "string" && /^[a-zA-Z0-9_-]{20,32}$/.test(search["club"])
       ? { club: search["club"] }
       : {}),
@@ -71,15 +72,15 @@ function Room() {
   const { club, error: clubError, setClub } = useClub(clubId);
   const scheduled = club?.screenings.find((item) => item.id === screeningId);
   const nav = useNavigate();
-  const watchMode = watch === "stream" ? "stream" : "direct";
-  const setWatchMode = (mode: "direct" | "stream") => {
+  const watchMode = watch === "stream" ? "stream" : watch === "share" ? "share" : "direct";
+  const setWatchMode = (mode: "direct" | "stream" | "share") => {
     void nav({
       to: "/room/$code",
       params: { code },
       search: {
         ...(clubId ? { club: clubId } : {}),
         ...(screeningId ? { screening: screeningId } : {}),
-        ...(mode === "stream" ? { watch: "stream" as const } : {}),
+        ...(mode !== "direct" ? { watch: mode } : {}),
       },
       replace: true,
     });
@@ -97,8 +98,6 @@ function Room() {
   const initialLoaded = useRef(false);
   const [text, setText] = useState("");
   const [tab, setTab] = useState<"chat" | "queue" | "people" | "poll">("chat");
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All films");
   const [mediaUrl, setMediaUrl] = useState("");
   const [notice, setNotice] = useState("");
   const [copied, setCopied] = useState(false);
@@ -118,19 +117,15 @@ function Room() {
   }, [watchMode]);
 
   useEffect(() => {
-    if (watchMode === "stream" || !room.ready || !room.isHost || initialLoaded.current) return;
+    if (watchMode !== "direct" || !room.ready || !room.isHost || initialLoaded.current) return;
     if (clubId && screeningId && !scheduled) return;
     initialLoaded.current = true;
     if (room.state.playback.videoId) return;
     if (scheduled?.film.source === "direct") {
-      room.api.load(
-        CATALOG.find((film) => film.src === scheduled.film.url)?.id ?? scheduled.film.url,
-      );
+      room.api.load(scheduled.film.url);
       return;
     }
-    const first = sessionStorage.getItem("watchparty:first-video");
     sessionStorage.removeItem("watchparty:first-video");
-    if (first && CATALOG.some((film) => film.id === first)) room.api.load(first);
   }, [
     room.ready,
     room.isHost,
@@ -143,9 +138,9 @@ function Room() {
   ]);
 
   useEffect(() => {
-    if (watchMode === "stream") {
+    if (watchMode !== "direct") {
       v.current?.pause();
-      room.api.setPlayerStatus("Streaming mode — choose video links to join this player");
+      room.api.setPlayerStatus("Separate playback — choose video links to join this player");
       return;
     }
     const id = setInterval(() => {
@@ -189,7 +184,7 @@ function Room() {
   const invite = async () => {
     try {
       const inviteUrl = new URL(location.href);
-      if (watchMode === "stream") inviteUrl.searchParams.set("watch", "stream");
+      if (watchMode !== "direct") inviteUrl.searchParams.set("watch", watchMode);
       else inviteUrl.searchParams.delete("watch");
       await navigator.clipboard.writeText(inviteUrl.href);
       setCopied(true);
@@ -243,19 +238,6 @@ function Room() {
   const s = room.state;
   const connected = room.status === "live" && room.ready;
   const controls = connected && room.canControl && !!movie;
-  const films = CATALOG.map((film) => ({
-    film,
-    score: fuzzyScore(query, [film.title, ...film.genres, film.mood]),
-  }))
-    .filter(
-      ({ film, score }) => score > 0 && (category === "All films" || film.category === category),
-    )
-    .sort((a, b) => b.score - a.score);
-  const picks = recommend(
-    [...s.history, ...s.queue.map((q) => q.videoId)],
-    new Set([s.playback.videoId ?? ""]),
-    3,
-  );
   return (
     <main
       className={`room-page club-room ${theatre ? "theatre-mode" : ""} ${chatView === "hidden" || (chatView === "paused" && (watchMode === "stream" ? streamingPlaying : room.state.playback.playing)) ? "chat-hidden" : ""}`}
@@ -328,10 +310,17 @@ function Room() {
           <div className="watch-mode-tabs" role="tablist" aria-label="Where to watch">
             <button
               role="tab"
+              aria-selected={watchMode === "share"}
+              onClick={() => setWatchMode("share")}
+            >
+              Screen share
+            </button>
+            <button
+              role="tab"
               aria-selected={watchMode === "direct"}
               onClick={() => setWatchMode("direct")}
             >
-              Samples & video links
+              Video link
             </button>
             <button
               role="tab"
@@ -341,7 +330,9 @@ function Room() {
               Streaming service
             </button>
           </div>
-          {watchMode === "stream" ? (
+          {watchMode === "share" ? (
+            <ScreenSharePanel code={code} id={me.id} isHost={room.isHost} connected={connected} />
+          ) : watchMode === "stream" ? (
             <StreamingPanel code={code} id={me.id} name={me.name} onPlaying={setStreamingPlaying} />
           ) : (
             <>
@@ -372,7 +363,7 @@ function Room() {
                       <Film size={34} />
                     </span>
                     <h2>What are we watching?</h2>
-                    <p>Choose a film below or add a direct video link.</p>
+                    <p>Add your own direct video link to the queue.</p>
                     <a
                       href="#room-discover"
                       className="action-primary"
@@ -382,7 +373,7 @@ function Room() {
                           ?.setAttribute("open", "")
                       }
                     >
-                      Browse the film shelf <ChevronRight size={17} />
+                      Add a video link <ChevronRight size={17} />
                     </a>
                   </div>
                 )}
@@ -564,72 +555,9 @@ function Room() {
               />
               <details className="room-library" id="room-discover">
                 <summary>
-                  Browse films & add a video <Plus size={16} />
+                  Add your own video <Plus size={16} />
                 </summary>
                 <section className="room-discovery">
-                  <div className="discovery-heading">
-                    <div>
-                      <h2>The film shelf</h2>
-                    </div>
-                    <label className="search-field">
-                      <Search size={16} />
-                      <input
-                        aria-label="Search films"
-                        placeholder="Search films, genres…"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                      />
-                    </label>
-                  </div>
-                  <div className="category-tabs" aria-label="Film category">
-                    {["All films", ...CATEGORIES].map((c) => (
-                      <button
-                        key={c}
-                        aria-pressed={c === category}
-                        className={category === c ? "active" : ""}
-                        onClick={() => setCategory(c)}
-                      >
-                        {c}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="room-film-grid">
-                    {films.map(({ film }) => (
-                      <article className="room-film" key={film.id}>
-                        <div className="room-film-image">
-                          <img src={film.thumb} alt="" loading="lazy" />
-                          <span>{film.minutes} min</span>
-                          <button
-                            disabled={!connected || !room.canControl}
-                            className="film-play"
-                            aria-label={`Play ${film.title}`}
-                            onClick={() => room.api.load(film.id)}
-                          >
-                            <Play size={18} fill="currentColor" />
-                          </button>
-                        </div>
-                        <div className="room-film-copy">
-                          <div>
-                            <h3>{film.title}</h3>
-                            <p>{film.genres.slice(0, 2).join(" · ")}</p>
-                          </div>
-                          <button
-                            disabled={!connected}
-                            aria-label={`Queue ${film.title}`}
-                            onClick={() => {
-                              room.api.enqueue(film.id);
-                              setNotice(`${film.title} added to the queue`);
-                            }}
-                          >
-                            <Plus size={18} />
-                          </button>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                  {!films.length && (
-                    <p className="empty-results">No films found. Try another title or category.</p>
-                  )}
                   <form
                     className="video-link-form"
                     onSubmit={(e) => {
@@ -823,23 +751,6 @@ function Room() {
                 >
                   <SkipForward size={16} /> Play next
                 </button>
-                <h4 className="picks-heading">A few ideas for the room</h4>
-                {picks.map((film) => (
-                  <button
-                    className="suggested-pick"
-                    disabled={!connected}
-                    key={film.id}
-                    onClick={() => room.api.enqueue(film.id)}
-                  >
-                    <span>
-                      {film.title}
-                      <small>
-                        {film.mood} · {film.minutes} min
-                      </small>
-                    </span>
-                    <Plus size={16} />
-                  </button>
-                ))}
               </div>
             ))}
           {tab === "people" && (

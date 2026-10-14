@@ -13,7 +13,8 @@ export type Movie = {
 };
 
 // Open films from the Blender Foundation and official W3C media demonstrations.
-export const CATALOG: Movie[] = [
+// Legacy IDs remain resolvable for existing rooms; these are never suggested.
+const CATALOG: Movie[] = [
   {
     id: "bbb",
     title: "Big Buck Bunny",
@@ -69,10 +70,6 @@ export const CATALOG: Movie[] = [
   },
 ];
 
-export const GENRES = Array.from(new Set(CATALOG.flatMap((x) => x.genres))).sort();
-export const CATEGORIES = Array.from(new Set(CATALOG.map((x) => x.category)));
-export const MOODS = Array.from(new Set(CATALOG.map((x) => x.mood))).sort();
-
 /** Resolve a catalog id or a raw media URL into something playable. */
 export function resolveVideo(id: string | null): Movie | null {
   if (!id) return null;
@@ -101,26 +98,4 @@ export function resolveVideo(id: string | null): Movie | null {
     };
   }
   return null;
-}
-
-/** Recommend by genre/mood affinity with what the room has watched, reacted to or queued. */
-export function recommend(signals: string[], exclude: Set<string>, limit = 4): Movie[] {
-  const weights = new Map<string, number>();
-  for (const id of signals) {
-    const mv = CATALOG.find((x) => x.id === id);
-    if (!mv) continue;
-    for (const g of mv.genres) weights.set(g, (weights.get(g) ?? 0) + 1);
-    weights.set(`mood:${mv.mood}`, (weights.get(`mood:${mv.mood}`) ?? 0) + 0.5);
-  }
-  return CATALOG.filter((x) => !exclude.has(x.id))
-    .map((x) => ({
-      x,
-      s:
-        x.genres.reduce((a, g) => a + (weights.get(g) ?? 0), 0) +
-        (weights.get(`mood:${x.mood}`) ?? 0) +
-        x.rating / 20,
-    }))
-    .sort((a, b) => b.s - a.s)
-    .slice(0, limit)
-    .map((r) => r.x);
 }

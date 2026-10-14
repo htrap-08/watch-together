@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Check, Play } from "lucide-react";
-import { CATALOG } from "@/lib/catalog";
+import { ArrowRight } from "lucide-react";
 import { loadMe, newRoomCode, saveMe } from "@/lib/identity";
 
 export const Route = createFileRoute("/")({
@@ -23,20 +22,17 @@ function Index() {
   const nameInput = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
-  const [source, setSource] = useState<"direct" | "stream">("direct");
+  const [source, setSource] = useState<"direct" | "stream" | "share">("share");
   const [mode, setMode] = useState<"create" | "join">("create");
-  const [film, setFilm] = useState(CATALOG[1]!);
   useEffect(() => setName(loadMe()?.name ?? ""), []);
   function go() {
     if (!name.trim() || (mode === "join" && code.length !== 6)) return;
     saveMe(name);
-    if (mode === "create" && source === "direct")
-      sessionStorage.setItem("watchparty:first-video", film.id);
-    else sessionStorage.removeItem("watchparty:first-video");
+    sessionStorage.removeItem("watchparty:first-video");
     void nav({
       to: "/room/$code",
       params: { code: mode === "create" ? newRoomCode() : code },
-      search: source === "stream" ? { watch: "stream" } : {},
+      search: source === "direct" ? {} : { watch: source },
     });
   }
   return (
@@ -59,28 +55,90 @@ function Index() {
               Make a night <em>of it.</em>
             </h1>
           </div>
-          <figure className="club-still">
-            <img src={film.thumb} alt={`Still from ${film.title}`} />
-            <figcaption>
-              <span>On your screen</span>
-              <h2>{film.title}</h2>
+          <div className="watch-paths">
+            <section className="watch-path" aria-labelledby="share-heading">
+              <p className="path-number">01 / One screen, shared</p>
+              <h2 id="share-heading">Share a browser tab.</h2>
+              <p>One person presses play. Everyone else watches the same picture, right here.</p>
+              <dl>
+                <div>
+                  <dt>YouTube</dt>
+                  <dd>Ordinary uploads & live videos; skip rentals and purchased films.</dd>
+                </div>
+                <div>
+                  <dt>Twitch</dt>
+                  <dd>Unprotected live streams and recordings.</dd>
+                </div>
+                <div>
+                  <dt>Vimeo & your videos</dt>
+                  <dd>Videos without DRM. Some Vimeo creators enable protection.</dd>
+                </div>
+              </dl>
+              <button
+                className="path-choice"
+                onClick={() => {
+                  setSource("share");
+                  setMode("create");
+                  nameInput.current?.focus();
+                }}
+              >
+                Start with screen sharing <ArrowRight size={16} />
+              </button>
+              <small>
+                Desktop Chrome / Edge recommended. Choose a tab and include tab audio. Capture
+                depends on the video and browser; it does not grant permission to rebroadcast.
+              </small>
+            </section>
+            <section className="watch-path" aria-labelledby="extension-heading">
+              <p className="path-number">02 / Separate screens, same moment</p>
+              <h2 id="extension-heading">Watch on the service.</h2>
               <p>
-                {film.year} <span>·</span> {film.genres[0]} <span>·</span> {film.minutes} min
+                For protected films, each person opens the same title. Our extension keeps playback
+                in time.
               </p>
-            </figcaption>
-            <button
-              className="club-still-play"
-              aria-label={`Choose ${film.title} for your room`}
-              onClick={() => {
-                setMode("create");
-                setSource("direct");
-                nameInput.current?.focus();
-              }}
+              <p className="service-names">
+                Netflix · Prime Video · Disney+ · Hulu · Max · Apple TV+ · Paramount+ · Crunchyroll
+              </p>
+              <p className="path-detail">
+                Everyone needs access to the title and the Chrome / Edge extension. Service
+                integrations are experimental; players, regions and ads can affect sync.
+              </p>
+              <a className="path-choice" href="/watch-together-extension.zip" download>
+                Download the extension <ArrowRight size={16} />
+              </a>
+              <Link className="path-help" to="/streaming">
+                Installation & compatibility notes
+              </Link>
+              <button
+                className="path-choice"
+                onClick={() => {
+                  setSource("stream");
+                  setMode("create");
+                  nameInput.current?.focus();
+                }}
+              >
+                Create an extension room <ArrowRight size={16} />
+              </button>
+            </section>
+          </div>
+          <p className="compatibility-footnote">
+            A black picture usually means protected content. Use separate playback instead.{" "}
+            <a
+              href="https://help.vimeo.com/hc/en-us/articles/31622243101969-Digital-Rights-Management-DRM-for-my-videos"
+              target="_blank"
+              rel="noreferrer"
             >
-              <Play size={20} fill="currentColor" />
-            </button>
-          </figure>
-          <p className="club-feature-caption">Pick something below, or bring your own film.</p>
+              DRM & capture
+            </a>{" "}
+            ·{" "}
+            <a
+              href="https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Browser sharing support
+            </a>
+          </p>
         </div>
         <aside className="club-boxoffice" id="start">
           <div className="club-form-tabs" role="tablist" aria-label="Room action">
@@ -146,9 +204,10 @@ function Index() {
             <select
               id="watch-source"
               value={source}
-              onChange={(event) => setSource(event.target.value as "direct" | "stream")}
+              onChange={(event) => setSource(event.target.value as "direct" | "stream" | "share")}
             >
-              <option value="direct">Our film shelf / a video link</option>
+              <option value="share">Screen share</option>
+              <option value="direct">Direct video link</option>
               <option value="stream">A streaming service</option>
             </select>
             <p className="club-source-note">
@@ -157,8 +216,10 @@ function Index() {
                   You’ll need our <Link to="/streaming">Chrome / Edge extension</Link> and access to
                   the film.
                 </>
+              ) : source === "share" ? (
+                "The host shares a tab. Friends watch here without an extension."
               ) : (
-                "No account, download or extension needed."
+                "Paste your own video link in the room. No extension needed."
               )}
             </p>
             <button type="submit" className="club-submit">
@@ -167,46 +228,10 @@ function Index() {
             </button>
           </form>
           <div className="club-ticket-end">
-            <span>Everyone gets their own screen.</span>
+            <span>Bring something worth watching.</span>
             <span aria-hidden="true">✳</span>
           </div>
         </aside>
-      </section>
-      <section className="club-shelf" id="films">
-        <div className="club-shelf-heading">
-          <h2>On the house.</h2>
-          <p>A few open films & trailers to get you started.</p>
-        </div>
-        <div className="club-film-list">
-          {CATALOG.map((item) => (
-            <button
-              key={item.id}
-              className={`club-film ${item.id === film.id && source === "direct" ? "is-picked" : ""}`}
-              aria-pressed={item.id === film.id && source === "direct"}
-              onClick={() => {
-                setFilm(item);
-                setSource("direct");
-                setMode("create");
-              }}
-            >
-              <img src={item.thumb} alt="" loading="lazy" />
-              <span className="club-film-text">
-                <strong>{item.title}</strong>
-                <small>
-                  {item.category === "Trailers" ? "Trailer" : "Short film"} · {item.year}
-                </small>
-              </span>
-              <span className="club-film-duration">{item.minutes} min</span>
-              <span className="club-film-pick">
-                {item.id === film.id && source === "direct" ? (
-                  <Check size={16} />
-                ) : (
-                  <ArrowRight size={16} />
-                )}
-              </span>
-            </button>
-          ))}
-        </div>
       </section>
       <footer className="club-footer">
         <p>

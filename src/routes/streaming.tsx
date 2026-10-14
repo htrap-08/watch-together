@@ -47,6 +47,57 @@ function Streaming() {
         </small>
       </section>
       <section className="guide-section">
+        <h2>Which way should we watch?</h2>
+        <p>
+          Ordinary YouTube uploads, unprotected Twitch streams and non-DRM Vimeo videos are
+          candidates for the homepage’s Screen share mode. One host shares a browser tab; friends
+          watch here without the extension. Rentals, purchased films and protected Vimeo videos are
+          excluded from that recommendation.
+        </p>
+        <p>
+          Use separate playback for Netflix, Prime Video and other subscription films. Each viewer
+          needs their own access to the same title. Screen capture can be blocked by DRM, and our
+          extension never removes that protection. Commercial service adapters are experimental,
+          rather than verified against every current player.
+        </p>
+        <p>
+          Technical capture depends on the title, browser and operating system. Choose a tab and
+          include tab audio in desktop Chrome or Edge. Direct peer connections can fail on
+          restrictive networks; there is no TURN media relay yet.
+        </p>
+        <p>
+          References:{" "}
+          <a href="https://help.netflix.com/en/node/27451" target="_blank" rel="noreferrer">
+            Netflix protected content
+          </a>
+          ,{" "}
+          <a
+            href="https://www.primevideo.com/help?nodeId=G8X362NHQ64MH5SY"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Prime Video protected content
+          </a>
+          ,{" "}
+          <a
+            href="https://help.vimeo.com/hc/en-us/articles/31622243101969-Digital-Rights-Management-DRM-for-my-videos"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Vimeo recording protection
+          </a>
+          ,{" "}
+          <a
+            href="https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia"
+            target="_blank"
+            rel="noreferrer"
+          >
+            browser capture & audio support
+          </a>
+          .
+        </p>
+      </section>
+      <section className="guide-section">
         <h2>Install it once.</h2>
         <ol>
           <li>

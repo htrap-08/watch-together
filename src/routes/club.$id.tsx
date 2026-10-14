@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowRight, Calendar, Check, Copy, Plus } from "lucide-react";
-import { CATALOG } from "@/lib/catalog";
 import {
   calendarFile,
   clubAction,
@@ -321,21 +320,6 @@ function ClubPage() {
               Add to shelf <Plus size={14} />
             </button>
           </form>
-          <details className="club-open-films">
-            <summary>Or choose an open film</summary>
-            {CATALOG.map((film) => (
-              <button
-                className="feature-button"
-                key={film.id}
-                disabled={busy || !name.trim()}
-                onClick={() =>
-                  void act({ type: "film_add", title: film.title, url: film.src, source: "direct" })
-                }
-              >
-                {film.title} <Plus size={13} />
-              </button>
-            ))}
-          </details>
         </section>
       </div>
       <section className="club-history">

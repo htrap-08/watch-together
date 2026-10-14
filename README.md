@@ -81,7 +81,7 @@ setup, and connect from each viewer's own streaming tab. See
 permissions, deployment, and limitations.
 
 The streaming relay owns host-authoritative playback state and restores it for
-late joiners. It shares room chat with the website, while sample-video playback
+late joiners. It shares room chat with the website, while direct-video playback
 remains a separate mode. The first streaming participant becomes host. Every
 participant must have authorized access to the same title; protected video is
 never captured or forwarded.
@@ -104,7 +104,7 @@ support. This package currently targets desktop Chrome and Edge.
   film records it in history; post-film reviews can then be saved to the club.
 - Direct-video rooms start paused. Each viewer marks ready after their player
   loads; the host starts or resumes together. Anyone can request an intermission.
-- Theatre mode hides room navigation and the film shelf. Chat can remain visible,
+- Theatre mode hides room navigation and the video-link form. Chat can remain visible,
   stay hidden, or appear only when playback is paused.
 - Companion v0.2 adds a narrowly scoped website handshake. Send room to extension
   stages the setup, then the user opens the film and clicks the extension to approve
@@ -120,3 +120,26 @@ Additional validation:
 node --test server/clubs.test.mjs
 node --env-file=.env.local --test server/clubs.integration.test.mjs realtime/distributed.test.mjs
 ```
+
+## Screen sharing and service selection
+
+The homepage has two viewing paths and no recommended/sample films. Screen-share
+mode (`?watch=share`) uses `getDisplayMedia` after a host click and WebRTC peers
+signalled through the existing authenticated-by-room-invite WebSocket transport.
+The relay forwards SDP/ICE, not captured media. Streams and peers close on stop,
+unmount or host loss; late viewers request the current session. Google’s public
+STUN server discovers connectivity; there is no TURN service, so restrictive NAT
+and firewalls can prevent delivery. A host uploads one copy per viewer; this is
+not an SFU and ten-viewer bandwidth/latency has not been certified.
+
+Ordinary YouTube/Twitch and non-DRM Vimeo videos are capture candidates, not a
+blanket promise of capture or permission to retransmit. Protected titles use
+separate playback with the companion, each viewer having their own access.
+Current subscription-service integrations remain experimental. Sources and
+installation instructions are linked on `/streaming`. Legacy sample IDs are
+resolved only to keep previously saved rooms/screenings working; there is no
+catalog browsing, default sample or recommendation engine in the UI.
+
+Screen signalling tests cover stale/foreign messages, early ICE, negotiation,
+multiple viewers, retries and cleanup using fake peer connections. Live browser
+capture and signed-in service compatibility require manual verification.
