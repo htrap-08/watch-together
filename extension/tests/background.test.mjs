@@ -130,6 +130,11 @@ test("worker connects, applies remote controls to the selected frame, shares cha
     tabId: 12,
   });
   assert.equal(result.ok, true);
+  assert.equal(
+    (await request("WT_READY", { ready: true })).ok,
+    false,
+    "A missing player cannot be marked ready",
+  );
   await eventually(async () => (await request("WT_STATUS")).result.snapshot?.members.length === 2);
   assert.deepEqual(calls.find((c) => c.scripts)?.scripts[0].matches, [
     "https://video.example.com/*",
@@ -147,6 +152,8 @@ test("worker connects, applies remote controls to the selected frame, shares cha
     },
     { id: "test-extension", tab: { id: 12 }, frameId: 7 },
   );
+
+  assert.equal((await request("WT_READY", { ready: true })).ok, true);
   host.send(JSON.stringify({ type: "stream_control", payload: { position: 42, playing: false } }));
   await eventually(() =>
     calls.some(

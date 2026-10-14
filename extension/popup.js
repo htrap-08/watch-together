@@ -33,6 +33,7 @@ function render(next) {
   const { session, snapshot, connection } = next;
   const host = snapshot?.hostId === session.id;
   const viewer = snapshot?.members.find((member) => member.id === session.id);
+  $("viewer-ready").disabled = !next.playerReady || session.url !== snapshot?.target?.url;
   $("viewer-ready").textContent = viewer?.ready ? "Ready ✓ · undo" : "I’m ready";
   $("break-status").textContent = snapshot?.intermission
     ? "Intermission — " + snapshot.intermission.name

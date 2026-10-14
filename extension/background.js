@@ -20,7 +20,17 @@ const write = (type, payload = {}) => {
   if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type, payload }));
 };
 const save = () => chrome.storage.session.set({ watchTogether: session });
-const view = () => ({ session, snapshot, connection, status: lastStatus, frame: leader, offset });
+const playerReady = () =>
+  !!reports.get(leader)?.score && !!reports.get(leader)?.ready && !reports.get(leader)?.ad;
+const view = () => ({
+  session,
+  snapshot,
+  connection,
+  status: lastStatus,
+  frame: leader,
+  offset,
+  playerReady: playerReady(),
+});
 const badge = () => {
   chrome.action.setBadgeText({
     text: !session
@@ -390,6 +400,10 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       return view();
     }
     if (message.type === "WT_READY") {
+      if (message.payload.ready && (!playerReady() || session?.url !== snapshot?.target?.url))
+        throw new Error(
+          "Open the host’s title and wait for its player to load before marking ready.",
+        );
       write("stream_ready", { ready: !!message.payload.ready });
       return { ok: true };
     }
