@@ -473,17 +473,15 @@ function Room() {
                     {formatTime(time)} <i>/ {formatTime(duration)}</i>
                   </span>
                   <div className="control-spacer" />
-                  <button
-                    className="countdown-control"
-                    disabled={!controls}
-                    onClick={() =>
-                      !s.started || s.intermission
-                        ? room.api.startScreening()
-                        : room.api.countdownPlay()
-                    }
-                  >
-                    3 · 2 · 1 start
-                  </button>
+                  {s.started && !s.intermission && !s.ended && (
+                    <button
+                      className="countdown-control"
+                      disabled={!controls}
+                      onClick={() => room.api.countdownPlay()}
+                    >
+                      3 · 2 · 1 start
+                    </button>
+                  )}
                   <button
                     aria-label={muted ? "Unmute" : "Mute"}
                     onClick={() => {
