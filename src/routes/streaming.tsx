@@ -47,6 +47,73 @@ function Streaming() {
         </small>
       </section>
       <section className="guide-section">
+        <h2>Install it once.</h2>
+        <ol>
+          <li>
+            <b>Unzip the download.</b>
+            <p>
+              The ZIP does not install itself. Extract it into a permanent folder; do not delete or
+              move that folder after installation. Every friend installs their own copy.
+            </p>
+          </li>
+          <li>
+            <b>Load it in your browser.</b>
+            <p>
+              Open <code>chrome://extensions</code> (or <code>edge://extensions</code>), enable
+              Developer mode, choose <strong>Load unpacked</strong>, and select the folder
+              containing <code>manifest.json</code>.
+            </p>
+          </li>
+          <li>
+            <b>Pin Watch Together.</b>
+            <p>
+              Open the puzzle-piece extensions menu and pin Watch Together. Return to your Watch
+              Together room and refresh the page so it can detect the newly installed extension.
+            </p>
+          </li>
+        </ol>
+      </section>
+      <section className="guide-section">
+        <h2>Connect a movie night.</h2>
+        <ol>
+          <li>
+            <b>Create a room and choose “Streaming service”.</b>
+            <p>
+              Use “Invite friends” to share the room link. Every friend opens that link and clicks
+              “Send room to extension” in their own browser. “Room sent” means the setup is filled
+              in; it does not connect a streaming tab yet.
+            </p>
+          </li>
+          <li>
+            <b>Open the same title on your service.</b>
+            <p>
+              In a separate tab, sign in to your streaming service and open the actual movie or
+              episode, not its description page. Every viewer needs access to the same service and
+              title in their region. Press play once, then pause while everyone joins.
+            </p>
+          </li>
+          <li>
+            <b>Click the extension on that video tab.</b>
+            <p>
+              Keep the video tab selected, click the pinned Watch Together icon, check the room code
+              and nickname, then click “Connect this video tab”. Allow access to the selected site
+              when Chrome or Edge asks. If you are connected to a previous room, click “Disconnect
+              this tab” first. Wait for the player to be found, then click “I’m ready”.
+            </p>
+          </li>
+          <li>
+            <b>The first streaming viewer hosts.</b>
+            <p>
+              Look for HOST in the extension. Once everyone has marked ready, that person presses
+              Play on their streaming site. Their play, pause and seek controls sync the viewers.
+              Leave the video tab and this room open: the service plays the film, and this website
+              keeps the chat. “Connected” on the website only confirms the room server; your name
+              must also appear in the room’s streaming viewers list.
+            </p>
+          </li>
+        </ol>
+      </section>
+      <section className="guide-section">
         <h2>Which way should we watch?</h2>
         <p>
           Ordinary YouTube uploads, unprotected Twitch streams and non-DRM Vimeo videos are
@@ -96,64 +163,6 @@ function Streaming() {
           </a>
           .
         </p>
-      </section>
-      <section className="guide-section">
-        <h2>Install it once.</h2>
-        <ol>
-          <li>
-            <b>Unzip the download.</b>
-            <p>Keep the extracted folder somewhere permanent.</p>
-          </li>
-          <li>
-            <b>Load it in your browser.</b>
-            <p>
-              Open <code>chrome://extensions</code> (or <code>edge://extensions</code>), enable
-              Developer mode, choose <strong>Load unpacked</strong>, and select the folder
-              containing <code>manifest.json</code>.
-            </p>
-          </li>
-          <li>
-            <b>Pin Watch Together.</b>
-            <p>
-              Use your browser’s extensions menu so the companion is easy to find on a video tab.
-            </p>
-          </li>
-        </ol>
-      </section>
-      <section className="guide-section">
-        <h2>Connect a movie night.</h2>
-        <ol>
-          <li>
-            <b>Create a room and choose “Streaming service”.</b>
-            <p>
-              Click “Send room to extension” to load the setup automatically. Copying the setup
-              still works as a fallback. Send your friends the room invite link.
-            </p>
-          </li>
-          <li>
-            <b>Open the same title on your service.</b>
-            <p>
-              Everyone signs in separately, needs access to the title in their region, and presses
-              play once to allow playback.
-            </p>
-          </li>
-          <li>
-            <b>Click the extension on that video tab.</b>
-            <p>
-              The room and nickname will already be filled after the handoff. Choose Connect, then
-              mark “I’m ready” once the player is found. The extension requests access to that site
-              and your realtime server.
-            </p>
-          </li>
-          <li>
-            <b>The first streaming viewer hosts.</b>
-            <p>
-              Start once everyone has marked ready. Play, pause, or seek using the host’s normal
-              player controls. Guests follow automatically. Chat in the extension or this website.
-              The host can pass control from the extension popup.
-            </p>
-          </li>
-        </ol>
       </section>
       <section className="guide-section">
         <div className="guide-section-title">
@@ -212,8 +221,9 @@ function Streaming() {
       <section className="guide-section">
         <h2>Invite your friends.</h2>
         <p>
-          Share your room link. Each friend opens it, copies their extension setup, and connects
-          from their own streaming tab. The setup connects everyone to the same room automatically.
+          Share the invite link, not the extension’s server settings. Each friend installs the
+          extension, opens your room, clicks “Send room to extension”, then connects from their own
+          video tab. Nobody watches a broadcast of your account.
         </p>
         <p>
           Use the public site link when watching with friends on other networks. A localhost link
@@ -221,12 +231,28 @@ function Streaming() {
         </p>
       </section>
       <section className="guide-section">
+        <h2>If “Send room to extension” doesn’t work.</h2>
+        <p>
+          Refresh this room after installing or reloading the extension. If the handoff still fails,
+          click “Copy extension setup” in the room, switch to your video tab, open the extension and
+          paste it into “Room setup or six-character code”. Enter your nickname and click “Connect
+          this video tab”. Keep Server settings at their defaults for the public site.
+        </p>
+        <p>
+          Updating an existing installation? Replace the files in its extracted folder, click Reload
+          on its card at chrome://extensions or edge://extensions, then refresh both the room and
+          the streaming video tab.
+        </p>
+      </section>
+      <section className="guide-section">
         <h2>When the player doesn’t connect.</h2>
         <p>
           Open an actual episode or movie, press play once, and click “Find player again” in the
           extension. If you navigate to another service or the player lives on a different permitted
-          domain, reconnect the extension on that tab. “Open the host’s video” navigates only after
-          you click it.
+          domain, reconnect the extension on that tab. If “I’m ready” is disabled, wait for ads to
+          finish and make sure you opened the host’s exact episode. “Open the host’s video”
+          navigates only after you click it. During intermission, everyone marks ready again; the
+          host clicks “Resume when everyone is ready” in the extension.
         </p>
         <p>
           This preview doesn’t access streaming passwords, cookies, account tokens, or video bytes.

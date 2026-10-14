@@ -59,12 +59,25 @@ export function StreamingPanel({
         Everyone opens the same film with their own account. The extension syncs playback; this room
         keeps the conversation together.
       </p>
+      <p className="extension-explainer">
+        The film plays on Netflix or your chosen service, not inside this page. Keep both tabs open:
+        the service for video, this room for chat. Every friend follows these steps on their own
+        computer.
+      </p>
       <div className="streaming-steps">
         <div>
           <span>01</span>
           <h3>Install the companion</h3>
-          <p>Download and load the extension in desktop Chrome or Edge.</p>
-          <Link to="/streaming" className="text-link">
+          <p>
+            Download the ZIP, extract it, then open chrome://extensions or edge://extensions. Turn
+            on Developer mode, click “Load unpacked” and select the extracted folder containing
+            manifest.json. Pin Watch Together from the browser’s extensions menu, then refresh this
+            room.
+          </p>
+          <a className="text-link" href="/watch-together-extension.zip" download>
+            <Download size={14} /> Download extension ZIP
+          </a>
+          <Link to="/streaming" className="text-link" target="_blank" rel="noreferrer">
             <Download size={14} /> Installation & compatibility
           </Link>
         </div>
@@ -72,8 +85,10 @@ export function StreamingPanel({
           <span>02</span>
           <h3>Connect your video tab</h3>
           <p>
-            Send the room below, then open your film and click the extension. Copying the setup
-            still works as a fallback.
+            Click “Send room to extension” here. In a separate tab, sign in to your streaming
+            service and open the actual film or episode. Click the pinned Watch Together icon on
+            that video tab, check the room code and click “Connect this video tab”. Allow the site
+            access it requests.
           </p>
           <button
             className="action-primary"
@@ -93,7 +108,7 @@ export function StreamingPanel({
           <p className="feature-muted">
             {extension
               ? "Extension v" + extension + " detected."
-              : "Use companion v0.2 for the copy-free setup."}
+              : "No extension detected yet. Install it, then refresh this room."}
           </p>
           {handoff && <p role="status">{handoff}</p>}
           <button className="action-secondary" onClick={() => void copy()}>
@@ -105,18 +120,46 @@ export function StreamingPanel({
           <span>03</span>
           <h3>Play together</h3>
           <p>
-            The first connected streaming viewer hosts. Playback controls stay on the streaming tab;
-            chat works here and in the extension.
+            Each viewer waits for the player to load, then clicks “I’m ready” in the extension. The
+            first person to connect is the streaming host. Once everyone is ready, the host presses
+            Play on their streaming site. The host’s play, pause and seek controls sync the others.
           </p>
         </div>
       </div>
+      <details className="extension-troubleshooting">
+        <summary>Invite friends or troubleshoot setup</summary>
+        <p>
+          <b>Invite friends:</b> use “Invite friends” at the top of this room. Each person opens
+          that link, installs the extension and sends the room to their own extension. They need
+          access to the same title and service.
+        </p>
+        <p>
+          <b>Handoff didn’t work?</b> refresh this room after installing. Or click “Copy extension
+          setup” and paste it into “Room setup or six-character code” in the popup on your video
+          tab. Leave Server settings at their defaults.
+        </p>
+        <p>
+          <b>Already connected to another room?</b> click “Disconnect this tab” in the extension
+          before connecting to this room.
+        </p>
+        <p>
+          <b>“I’m ready” is disabled?</b> open the host’s exact episode, wait for ads to finish,
+          press play once and pause, then click “Find player again”. The player must be found before
+          you can mark ready.
+        </p>
+        <p>
+          <b>Connected here does not mean your video tab is connected.</b> Check that your name
+          appears below as a streaming viewer. “Room sent” only fills the extension setup; you still
+          need to connect it from the video tab.
+        </p>
+      </details>
       {manual && (
         <label className="setup-fallback">
           Copy this setup manually
           <textarea readOnly value={setup} onFocus={(event) => event.target.select()} />
         </label>
       )}
-      {connection !== "Connected" && (
+      {connection === "Reconnecting" && (
         <div className="feature-recovery" role="status">
           <p>
             Room connection interrupted. Your streaming accounts and video stay on their own sites.

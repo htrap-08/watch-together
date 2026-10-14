@@ -103,6 +103,18 @@ function Index() {
                 Everyone needs access to the title and the Chrome / Edge extension. Service
                 integrations are experimental; players, regions and ads can affect sync.
               </p>
+              <ol className="extension-quick-start">
+                <li>Every viewer installs the extension in desktop Chrome or Edge.</li>
+                <li>Create a room and send the invite link to your friends.</li>
+                <li>
+                  Each person clicks “Send room to extension”, opens the same film on the service,
+                  then clicks the extension’s “Connect this video tab”.
+                </li>
+                <li>
+                  Everyone marks “I’m ready”. The streaming host presses Play on the service; keep
+                  this room open for chat.
+                </li>
+              </ol>
               <a className="path-choice" href="/watch-together-extension.zip" download>
                 Download the extension <ArrowRight size={16} />
               </a>

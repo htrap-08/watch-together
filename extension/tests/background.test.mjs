@@ -4,7 +4,7 @@ import { once } from "node:events";
 import { WebSocket } from "ws";
 import { createRealtimeServer } from "../../realtime/server.mjs";
 const eventually = async (fn) => {
-  const deadline = Date.now() + 3000;
+  const deadline = Date.now() + (process.env.TEST_REALTIME_URL ? 10000 : 3000);
   while (Date.now() < deadline) {
     if (await fn()) return;
     await new Promise((r) => setTimeout(r, 10));
@@ -13,9 +13,14 @@ const eventually = async (fn) => {
 };
 
 test("worker connects, applies remote controls to the selected frame, shares chat, and restores a session", async (t) => {
-  const { server, wss } = createRealtimeServer();
-  server.listen(0, "127.0.0.1");
-  await once(server, "listening");
+  const local = process.env.TEST_REALTIME_URL ? null : createRealtimeServer();
+  if (local) {
+    local.server.listen(0, "127.0.0.1");
+    await once(local.server, "listening");
+  }
+  const room = process.env.TEST_REALTIME_URL
+    ? Math.random().toString(36).slice(2, 8).padEnd(6, "X").toUpperCase()
+    : "ABC123";
   const sessionStore = {},
     localStore = {};
   const calls = [],
@@ -71,13 +76,13 @@ test("worker connects, applies remote controls to the selected frame, shares cha
   const website = {
     id: "test-extension",
     tab: { id: 55 },
-    url: "https://watch-together-lyart.vercel.app/room/ABC123",
+    url: `https://watch-together-lyart.vercel.app/room/${room}`,
   };
   const token =
     "wt1." +
     Buffer.from(
       JSON.stringify({
-        room: "ABC123",
+        room,
         relay: "wss://watch-together-lyart.vercel.app/api/realtime",
         roomUrl: website.url,
       }),
@@ -98,8 +103,13 @@ test("worker connects, applies remote controls to the selected frame, shares cha
     ).ok,
     false,
   );
-  const relay = `ws://127.0.0.1:${server.address().port}`;
-  const host = new WebSocket(`${relay}?room=ABC123&key=external-host`);
+  const relay = process.env.TEST_REALTIME_URL ?? `ws://127.0.0.1:${local.server.address().port}`;
+  const host = new WebSocket(`${relay}?room=${room}&key=external-host`);
+  let hostJoined = false;
+  host.on("message", (data) => {
+    const m = JSON.parse(data);
+    if (m.type === "stream_snapshot" && m.payload.hostId === "external-host") hostJoined = true;
+  });
   await once(host, "open");
   host.send(
     JSON.stringify({
@@ -112,18 +122,20 @@ test("worker connects, applies remote controls to the selected frame, shares cha
       },
     }),
   );
-  await new Promise((r) => setTimeout(r, 20));
+  await eventually(() => hostJoined);
   t.after(async () => {
     await request("WT_DISCONNECT");
     host.terminate();
-    for (const ws of wss.clients) ws.terminate();
-    await new Promise((r) => wss.close(r));
-    await new Promise((r) => server.close(r));
+    if (local) {
+      for (const ws of local.wss.clients) ws.terminate();
+      await new Promise((r) => local.wss.close(r));
+      await new Promise((r) => local.server.close(r));
+    }
     delete globalThis.chrome;
     delete globalThis.WebSocket;
   });
   const result = await request("WT_CONNECT", {
-    setup: "ABC123",
+    setup: room,
     relay,
     roomUrl: "http://localhost:3000",
     name: "Guest",
