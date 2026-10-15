@@ -1,8 +1,8 @@
 # Watch Together
 
 A film-club watch-party app with synchronized direct-video playback, real movie and
-series discovery for India, room chat, reactions, shared queues, polls, host
-transfer, streaming-service companions and optional tab sharing.
+series discovery from around the world with Indian availability, room chat,
+reactions, shared queues, polls, host transfer, streaming-service companions and optional tab sharing.
 
 Live: https://watch-together-lyart.vercel.app/
 
@@ -20,6 +20,24 @@ relay run together; the relay defaults to port 3001. For other devices, use your
 computer's printed LAN address and allow both ports through the firewall. Direct
 video rooms do not require an external backend. Persistent film clubs require
 server-only `REDIS_URL`; see `.env.example`. Never put that value in a `VITE_` variable.
+
+For persistent clubs in local development, copy `.env.example` to `.env.local`,
+set your own `REDIS_URL` there, then run:
+
+```sh
+node --env-file=.env.local --run dev
+```
+
+This explicitly loads server environment variables into both processes. The basic
+`npm run dev` command works for direct-video rooms without Redis. `VITE_` variables
+are client-visible; keep credentials server-only. The clean-install checks below
+were verified with Node.js 24.21.0 and npm 11.19.0.
+
+For a quick two-viewer demo, choose **Direct video link**, create a room, and add
+`https://watch-together-lyart.vercel.app/diagnostics/fixture.mp4` under **Add your own
+video**. Press **Play next**, open the invite in another tab/device, mark both
+viewers ready, and choose **Start together**. Use your own deployment's fixture URL
+if running a separate copy. Protected streaming service links are not direct video URLs.
 
 ## Viewing modes
 
@@ -164,6 +182,12 @@ To check the companion worker against a deployed relay with simulated browser AP
 ```sh
 TEST_REALTIME_URL=wss://watch-together-lyart.vercel.app/api/realtime node --test extension/tests/background.test.mjs
 ```
+
+The Redis integration command requires `.env.local` with a real `REDIS_URL`.
+Without Redis, use the other commands; the distributed relay integration test
+explicitly reports a skip rather than passing an unavailable backend. Never commit
+`.env.local`. See `docs/FINAL-CHECKS.md` for the recorded submission audit and remaining
+manual verification.
 
 The extension ZIP is regenerated before builds. Installation and service limitations
 are documented at `/streaming` and in `extension/README.md`.

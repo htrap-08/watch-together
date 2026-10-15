@@ -42,7 +42,7 @@ Updated: 15 October 2026. Live app: https://watch-together-lyart.vercel.app/
 
 ## Demo sequence
 
-1. Show the homepage's India film and series picks. Search `shaqe` to demonstrate typo tolerance, filter by format/genre/platform and select **Plan a watch party**.
+1. Show the homepage's international and Indian film and series picks. Search `shaqe` to demonstrate typo tolerance, filter by format/genre/platform and select **Plan a watch party**.
 2. Explain protected playback: each person needs their own service access and the unpacked companion. The site carries the selected title into setup; it never forwards protected video. Commercial service players still need signed-in manual verification.
 3. For a dependable core demo, choose **Video link** and use the diagnostic fixture URL on this deployment (`/diagnostics/fixture.mp4`) as a complete HTTP/HTTPS URL. Invite another viewer, load the queue item and mark ready.
 4. Start together, pause/seek, exchange chat/reactions, vote in a poll, change the host and request an intermission.
@@ -51,7 +51,7 @@ Updated: 15 October 2026. Live app: https://watch-together-lyart.vercel.app/
 
 ## Checks and limits
 
-Run the README check commands before submission. The prior reconnect and poll regressions are permanent passing tests now. The source metadata cleanup, lint errors and misleading documentation were corrected.
+Run the README check commands before submission. The final recorded audit is in `docs/FINAL-CHECKS.md`. The prior reconnect and poll regressions are permanent passing tests now. The source metadata cleanup, lint errors and misleading documentation were corrected.
 
 Screen sharing uses peer-to-peer media without TURN or an SFU; restrictive networks and host bandwidth remain limitations. Streaming service adapters are preview integrations, including JioHotstar's generic HTML5 selector; signed-in Netflix/Prime/JioHotstar behavior is not certified by fixture tests. Extension installation is manual and documented on `/streaming`. Core queue/review behavior uses the direct player, while protected-title selection stays on its service.
 
