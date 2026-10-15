@@ -1891,10 +1891,6 @@
     normal 28px Georgia,
     serif;
 }
-.discovery-category-heading small {
-  font: 12px monospace;
-  color: #73796f;
-}
 .discovery-results button {
   margin-left: 18px;
 }
@@ -1912,11 +1908,7 @@
 .discovery-genres {
   font-size: 11px;
 }
-.discovery-chart {
-  font-size: 10px;
-  color: #73796f;
-  line-height: 1.6;
-}
+
 .discovery-links {
   display: flex;
   justify-content: space-between;

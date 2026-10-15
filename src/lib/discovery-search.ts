@@ -25,7 +25,7 @@ export function movieResults(pages: WikiPage[], query: string): DiscoveryTitle[]
     .filter(
       (p) =>
         /\b(film|movie)\b/i.test(p.description || "") &&
-        !/\b(actor|actress|director|filmography|list of|soundtrack|company)\b/i.test(
+        !/\b(actor|actress|director|filmography|list of|soundtrack|company|stage musical|musical based|novel|magazine|film festival|film award|video game)\b/i.test(
           p.description || "",
         ),
     )

@@ -77,7 +77,7 @@ export function MovieDiscovery({ onChoose }: { onChoose: (title: DiscoveryTitle)
     <section className="movie-discovery" id="discover" aria-labelledby="discovery-heading">
       <div className="discovery-title">
         <div>
-          <p className="path-number">THE WATCHLIST / WORLD CINEMA</p>
+          <p className="path-number">THE WATCHLIST</p>
           <h2 id="discovery-heading">Something worth staying in for.</h2>
         </div>
         <p>
@@ -139,7 +139,7 @@ export function MovieDiscovery({ onChoose }: { onChoose: (title: DiscoveryTitle)
         ))}
       </div>
       <div className="discovery-results" aria-live="polite" aria-busy={searching}>
-        {results.length} {results.length === 1 ? "title" : "titles"}
+        {term && `${results.length} ${results.length === 1 ? "match" : "matches"}`}
         {preferred.length ? " · matching tastes first" : ""}
         {hidden > 0 && ` · ${hidden} hidden by filters`}
         {filtered && (
@@ -163,9 +163,7 @@ export function MovieDiscovery({ onChoose }: { onChoose: (title: DiscoveryTitle)
         if (!titles.length) return null;
         return (
           <section className="discovery-category" key={group.kind} aria-label={group.heading}>
-            <h3 className="discovery-category-heading">
-              {group.heading} <small>{titles.length}</small>
-            </h3>
+            <h3 className="discovery-category-heading">{group.heading}</h3>
             <div className="discovery-grid">
               {titles.map((t) => (
                 <article className="discovery-film" key={t.id}>
@@ -180,7 +178,6 @@ export function MovieDiscovery({ onChoose }: { onChoose: (title: DiscoveryTitle)
                     {t.year && <small> ({t.year})</small>}
                   </h4>
                   <p className="discovery-genres">{t.genres.join(" · ")}</p>
-                  <p className="discovery-chart">{t.chart}</p>
                   <button className="path-choice" onClick={() => onChoose(t)}>
                     Plan a watch party <span aria-hidden="true">↗</span>
                   </button>
@@ -237,9 +234,8 @@ export function MovieDiscovery({ onChoose }: { onChoose: (title: DiscoveryTitle)
         <a href="https://www.netflix.com/tudum/top10/india/tv" target="_blank" rel="noreferrer">
           Netflix India Top 10
         </a>{" "}
-        (5–11 October). International picks have individual availability sources above, checked 15
-        October. Subscription access is separate from this site; service integrations remain
-        experimental.
+        (5–11 October). International picks use JustWatch availability listings, checked 15 October.
+        Subscription access is separate from this site; service integrations remain experimental.
       </p>
     </section>
   );

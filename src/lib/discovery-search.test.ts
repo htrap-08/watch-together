@@ -34,6 +34,12 @@ describe("worldwide discovery", () => {
           title: "Interstellar (soundtrack)",
           description: "2014 soundtrack album",
         },
+        {
+          id: 4,
+          key: "Interstellar_(musical)",
+          title: "Interstellar (musical)",
+          description: "Stage musical based on the 2014 film",
+        },
       ],
       "interstelar",
     );
