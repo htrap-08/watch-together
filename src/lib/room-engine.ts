@@ -36,6 +36,7 @@ export type Poll = {
   options: { text: string; votes: string[] }[];
   by: string;
   closed: boolean;
+  version?: number;
 };
 export type Reaction = { id: string; emoji: string; userId: string; videoId: string; t: number };
 
@@ -56,6 +57,8 @@ export type RoomState = {
 };
 
 type Ev = { type: string; from: string; sentAt: number; [k: string]: unknown };
+
+const playbackKey = (pb: Playback) => `${pb.videoId}:${pb.seq}:${pb.by}`;
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 
@@ -94,9 +97,14 @@ export function useRoom(code: string, me: Me | null) {
   const rttRef = useRef<number | null>(null);
   const samples = useRef<ClockSample[]>([]);
   const ctrlLatency = useRef<number[]>([]);
+  const appliedLatency = useRef<number[]>([]);
+  const settledDrift = useRef<number[]>([]);
+  const issued = useRef(new Map<string, { at: number; scheduled: boolean }>());
+  const observed = useRef(new Set<string>());
   const pingLatency = useRef<number[]>([]);
   const driftRef = useRef<number | null>(null);
   const syncedRef = useRef(false);
+  const resyncPending = useRef(true);
   const viewerReady = useRef<string | null>(null);
   const playerStatus = useRef("Loading player");
   const membersRef = useRef<Member[]>([]);
@@ -187,15 +195,22 @@ export function useRoom(code: string, me: Me | null) {
         case "sync_state": {
           if (ev["to"] !== m.id) break;
           const inc = ev["state"] as RoomState;
+          const authoritative =
+            ev.from === inc.hostId ||
+            (!membersRef.current.some((member) => member.id === inc.hostId) &&
+              electHost(membersRef.current.filter((member) => member.id !== m.id))?.id === ev.from);
           if (
-            !syncedRef.current ||
-            acceptHostClaim(
-              { hostId: s.hostId, epoch: s.hostEpoch },
-              { hostId: inc.hostId, epoch: inc.hostEpoch },
-            )
+            authoritative &&
+            (!syncedRef.current ||
+              (resyncPending.current && inc.hostId === s.hostId && inc.hostEpoch === s.hostEpoch) ||
+              acceptHostClaim(
+                { hostId: s.hostId, epoch: s.hostEpoch },
+                { hostId: inc.hostId, epoch: inc.hostEpoch },
+              ))
           ) {
             stateRef.current = { ...emptyState(), ...inc };
             syncedRef.current = true;
+            resyncPending.current = false;
             samples.current = [];
             offsetRef.current = (ev.sentAt as number) - Date.now(); // coarse until first pong
             setReady(true);
@@ -253,6 +268,11 @@ export function useRoom(code: string, me: Me | null) {
             break;
           }
           if (ev.type === "ctrl") {
+            if (issued.current.size > 500) issued.current.clear();
+            issued.current.set(playbackKey(inc), {
+              at: ev.sentAt,
+              scheduled: inc.at > ev.sentAt + 100,
+            });
             ctrlLatency.current = [
               ...ctrlLatency.current,
               Math.max(0, Date.now() + offsetRef.current - ev.sentAt),
@@ -322,10 +342,18 @@ export function useRoom(code: string, me: Me | null) {
           s.queue = s.queue.filter((q) => q.uid !== ev["uid"]);
           rerender();
           break;
-        case "poll":
-          s.poll = ev["poll"] as Poll;
-          rerender();
+        case "poll": {
+          const incoming = ev["poll"] as Poll;
+          if (
+            !s.poll ||
+            (incoming.version ?? 0) > (s.poll.version ?? 0) ||
+            ((incoming.version ?? 0) === (s.poll.version ?? 0) && incoming.id > s.poll.id)
+          ) {
+            s.poll = incoming;
+            rerender();
+          }
           break;
+        }
         case "poll_vote": {
           if (s.poll && s.poll.id === ev["pollId"] && !s.poll.closed) {
             const idx = ev["option"] as number;
@@ -393,6 +421,7 @@ export function useRoom(code: string, me: Me | null) {
 
     ch.subscribe((st) => {
       if (st === "SUBSCRIBED") {
+        resyncPending.current = true;
         setStatus("live");
         void ch.track({
           ...me,
@@ -407,18 +436,21 @@ export function useRoom(code: string, me: Me | null) {
         send("sync_req");
         clearTimeout(bootTimer);
         bootTimer = setTimeout(() => {
-          if (syncedRef.current) return;
+          if (!resyncPending.current) return;
           // nobody answered: the room is empty, we create it
           const s = stateRef.current;
           s.hostId = me.id;
           s.hostEpoch = Math.max(1, s.hostEpoch + 1);
           pushSystem(s, `${me.name} opened the room`);
           syncedRef.current = true;
+          resyncPending.current = false;
           setReady(true);
           send("host", { hostId: me.id, epoch: s.hostEpoch });
           rerender();
         }, 1800);
       } else if (st === "CHANNEL_ERROR" || st === "TIMED_OUT" || st === "CLOSED") {
+        resyncPending.current = true;
+        setReady(false);
         setStatus("reconnecting");
       }
     });
@@ -504,6 +536,8 @@ export function useRoom(code: string, me: Me | null) {
         viewerReady.current = null;
       }
       s.playback = next;
+      if (issued.current.size > 500) issued.current.clear();
+      issued.current.set(playbackKey(next), { at: now, scheduled: leadMs > 100 });
       send("ctrl", { pb: next, reset });
       rerender();
       return true;
@@ -550,6 +584,27 @@ export function useRoom(code: string, me: Me | null) {
         member.playerStatus === "Player connected",
     );
   const api = {
+    observePlayer: (actual: number, expected: number, applied: boolean, sampleable = true) => {
+      const key = playbackKey(stateRef.current.playback),
+        command = issued.current.get(key);
+      if (!command || command.scheduled) return;
+      const elapsed = hostNow() - command.at;
+      if (applied && !observed.current.has(key)) {
+        if (observed.current.size > 500) observed.current.clear();
+        observed.current.add(key);
+        appliedLatency.current = [...appliedLatency.current, Math.max(0, elapsed)].slice(-500);
+      }
+      if (sampleable && elapsed >= 500)
+        settledDrift.current = [...settledDrift.current, Math.abs(actual - expected) * 1000].slice(
+          -5000,
+        );
+    },
+    resetMeasurements: () => {
+      appliedLatency.current = [];
+      settledDrift.current = [];
+      observed.current.clear();
+      issued.current.clear();
+    },
     setPlayerStatus: (status: string) => {
       if (playerStatus.current !== status) {
         playerStatus.current = status;
@@ -591,11 +646,17 @@ export function useRoom(code: string, me: Me | null) {
       commit((s) => (s.chat = [...s.chat, msg].slice(-150)));
       send("chat", { msg });
     },
-    react: (emoji: string, t: number) => {
+    react: (emoji: string, t: number, source?: string) => {
       const m = meRef.current;
       const s = stateRef.current;
-      if (!m || !s.playback.videoId) return;
-      const r: Reaction = { id: uid(), emoji, userId: m.id, videoId: s.playback.videoId, t };
+      if (!m) return;
+      const r: Reaction = {
+        id: uid(),
+        emoji,
+        userId: m.id,
+        videoId: source ?? s.playback.videoId ?? "room",
+        t,
+      };
       commit((st) => (st.reactions = [...st.reactions, r].slice(-400)));
       spawnFloat(emoji, m.name);
       send("react", { r });
@@ -640,6 +701,7 @@ export function useRoom(code: string, me: Me | null) {
         options: options.map((text) => ({ text, votes: [] })),
         by: m.id,
         closed: false,
+        version: (stateRef.current.poll?.version ?? 0) + 1,
       };
       commit((s) => (s.poll = poll));
       send("poll", { poll });
@@ -710,6 +772,7 @@ export function useRoom(code: string, me: Me | null) {
     allReady: allReady(),
     driftRef,
     stats: {
+      player: () => ({ latency: [...appliedLatency.current], drift: [...settledDrift.current] }),
       offset: () => offsetRef.current,
       rtt: () => rttRef.current,
       ctrl: () => ctrlLatency.current,

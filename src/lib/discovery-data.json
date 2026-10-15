@@ -1,0 +1,94 @@
+{
+  "region": "India",
+  "checkedAt": "2026-10-15",
+  "titles": [
+    {
+      "id": "pradhama",
+      "title": "Pradhama Drishtiya Kuttakkar",
+      "kind": "Movie",
+      "genres": ["Crime", "Thriller"],
+      "platform": "Netflix",
+      "source": "https://www.justwatch.com/in/movie/pradhama-dhrishtya-kuttakkar",
+      "url": "https://www.netflix.com/title/83197640",
+      "chart": "JustWatch India movie charts · 12–15 Oct",
+      "image": "https://images.justwatch.com/backdrop/355370644/s640/pradhama-dhrishtya-kuttakkar.jpg"
+    },
+    {
+      "id": "drishyam3",
+      "title": "Drishyam 3",
+      "kind": "Movie",
+      "genres": ["Crime", "Drama"],
+      "platform": "Prime Video",
+      "source": "https://www.justwatch.com/in/movie/drishyam-3",
+      "url": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.cc904c26-41a3-43bb-985c-70757e98611e",
+      "chart": "JustWatch India movie charts · 12–15 Oct",
+      "image": "https://images.justwatch.com/backdrop/345693006/s640/drishyam-3.jpg"
+    },
+    {
+      "id": "bethlehem",
+      "title": "Bethlehem Kudumba Unit",
+      "kind": "Movie",
+      "genres": ["Romance", "Drama"],
+      "platform": "JioHotstar",
+      "source": "https://www.justwatch.com/in/movie/bethlehem-kudumba-unit",
+      "url": "https://www.hotstar.com/in/movies/bethlehem-kudumba-unit/1271710275",
+      "chart": "JustWatch India movie charts · 12–15 Oct",
+      "image": "https://images.justwatch.com/backdrop/354536110/s640/bethlehem-kudumba-unit.jpg"
+    },
+    {
+      "id": "mandaadi",
+      "title": "Mandaadi",
+      "kind": "Movie",
+      "genres": ["Sport", "Drama"],
+      "platform": "Netflix",
+      "source": "https://www.justwatch.com/in/movie/mandaadi",
+      "url": "https://www.netflix.com/title/82787383",
+      "chart": "JustWatch India movie charts · 12–15 Oct",
+      "image": "https://images.justwatch.com/backdrop/346321544/s640/mandaadi.jpg"
+    },
+    {
+      "id": "kapil",
+      "title": "The Great Indian Kapil Show",
+      "kind": "Series",
+      "genres": ["Comedy"],
+      "platform": "Netflix",
+      "source": "https://www.netflix.com/tudum/top10/india/tv",
+      "url": "https://www.netflix.com/title/81737430",
+      "chart": "Netflix India weekly #1 · 5–11 Oct",
+      "image": "https://dnm.nflximg.net/api/v6/9R7jmI8ri5rJNRlvCsMBDHE5JuQ/AAAABTSkESzyusLVtWA4mMxtByETzdbg4WuQZQBicjQ0TPzhW2DZW30n789UpnfV44vCMF8XYLJjuwuyEKM_5wHnAUQMOqffo2fL0N4y72HRzV8.png?r=244"
+    },
+    {
+      "id": "shaque",
+      "title": "Shaque: Trust No One",
+      "kind": "Series",
+      "genres": ["Crime", "Thriller"],
+      "platform": "Netflix",
+      "source": "https://www.netflix.com/tudum/top10/india/tv",
+      "url": "https://www.netflix.com/title/81762865",
+      "chart": "Netflix India weekly #2 · 5–11 Oct",
+      "image": "https://dnm.nflximg.net/api/v6/9R7jmI8ri5rJNRlvCsMBDHE5JuQ/AAAABXVjUwnW6Phl-NItch9TxnX_Hv8SUMB86nWLJiiejaAbegSjL83sVBxEHTSsd4Gk5oOLU5sv8KzBjNUQ5pxoHyGuPbWLdx3p-Vx-a31OS1Q.png?r=449"
+    },
+    {
+      "id": "chumbak",
+      "title": "Chumbak",
+      "kind": "Series",
+      "genres": ["Comedy"],
+      "platform": "Netflix",
+      "source": "https://www.netflix.com/tudum/top10/india/tv",
+      "url": "https://www.netflix.com/title/82059219",
+      "chart": "Netflix India weekly #3 · 5–11 Oct",
+      "image": "https://dnm.nflximg.net/api/v6/9R7jmI8ri5rJNRlvCsMBDHE5JuQ/AAAABSTP1zEu6FpgReie2PNmDSRagri6sLccTzK3StXxioB_j7L9N45UEIqjfUvM4i3CLrhepaoA4YDMAyZSBMdQZnR4z8Bdd8jrlU8a5Fdve_E.png?r=141"
+    },
+    {
+      "id": "eden",
+      "title": "East of Eden",
+      "kind": "Series",
+      "genres": ["Drama"],
+      "platform": "Netflix",
+      "source": "https://www.netflix.com/tudum/top10/india/tv",
+      "url": "https://www.netflix.com/title/81611854",
+      "chart": "Netflix India weekly #9 · 5–11 Oct",
+      "image": "https://dnm.nflximg.net/api/v6/9R7jmI8ri5rJNRlvCsMBDHE5JuQ/AAAABX-k7PFMDNnPWyFODkCHhE9ujVGHVs6_1FIjicdtN8gt8v9vByQ6IW2Kxylrpehqo4P7fuO3yJkUU-uYWJjLYdTpk0VuQdJsZiQE7xyKSls.png?r=76a"
+    }
+  ]
+}

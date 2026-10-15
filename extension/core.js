@@ -31,6 +31,12 @@ export const SERVICES = [
     ads: ["[data-testid='ad-countdown']"],
   },
   {
+    name: "JioHotstar",
+    hosts: ["hotstar.com", "jiohotstar.com"],
+    selectors: ["video"],
+    ads: ["[data-testid='ad-countdown']"],
+  },
+  {
     name: "Hulu",
     hosts: ["hulu.com"],
     selectors: ["video"],

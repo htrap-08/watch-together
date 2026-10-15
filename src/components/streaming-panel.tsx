@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Check, Copy, Download, ExternalLink, MonitorPlay, Users } from "lucide-react";
+import { selectionKey, type DiscoveryTitle } from "@/lib/discovery";
 import { extensionMessage } from "@/lib/extension-bridge";
 import { extensionSetup, useStreamingRoom } from "@/lib/streaming";
 
@@ -19,6 +20,14 @@ export function StreamingPanel({
   useEffect(() => {
     onPlaying?.(connection === "Connected" && !!snapshot?.playback.playing);
   }, [snapshot?.playback.playing, connection, onPlaying]);
+  const [selection, setSelection] = useState<DiscoveryTitle | null>(null);
+  useEffect(() => {
+    try {
+      setSelection(JSON.parse(sessionStorage.getItem(selectionKey(code)) || "null"));
+    } catch {
+      setSelection(null);
+    }
+  }, [code]);
   const [extension, setExtension] = useState<string | null>(null);
   const [handoff, setHandoff] = useState("");
   useEffect(() => {
@@ -64,6 +73,21 @@ export function StreamingPanel({
         the service for video, this room for chat. Every friend follows these steps on their own
         computer.
       </p>
+      {selection && (
+        <div className="streaming-session">
+          <h3>Tonight’s pick: {selection.title}</h3>
+          <p>
+            {selection.kind} · {selection.platform} · India
+          </p>
+          <a className="action-secondary" href={selection.url} target="_blank" rel="noreferrer">
+            Open on {selection.platform} <ExternalLink size={14} />
+          </a>
+          <p className="feature-muted">
+            Open the actual episode, then connect the extension from that tab. The connected host’s
+            title below is authoritative for other viewers.
+          </p>
+        </div>
+      )}
       <div className="streaming-steps">
         <div>
           <span>01</span>

@@ -39,7 +39,7 @@ function Streaming() {
           coordinates playback with your room, without capturing or forwarding the protected video.
         </p>
         <a className="action-primary" href="/watch-together-extension.zip" download>
-          <Download size={16} /> Download extension · v0.2 preview
+          <Download size={16} /> Download extension · v0.2.1 preview
         </a>
         <small>
           Existing users: replace the extracted files, reload the extension, then refresh the room
@@ -183,7 +183,7 @@ function Streaming() {
           </div>
           <div>
             <b>
-              Prime Video / Disney+ / Hulu / Max{" "}
+              Prime Video / Disney+ / JioHotstar / Hulu / HBO Max{" "}
               <small className="compat-status">Experimental</small>
             </b>
             <span>

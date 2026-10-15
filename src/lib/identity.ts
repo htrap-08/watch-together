@@ -1,6 +1,15 @@
 import type { Me } from "./room-engine";
 
-const COLORS = ["#f5b942", "#ff7a59", "#5ed6a0", "#6cb8ff", "#ff6fa8", "#c9e265", "#ffa94d", "#4dd4d4"];
+const COLORS = [
+  "#f5b942",
+  "#ff7a59",
+  "#5ed6a0",
+  "#6cb8ff",
+  "#ff6fa8",
+  "#c9e265",
+  "#ffa94d",
+  "#4dd4d4",
+];
 const KEY = "watchparty:me";
 
 export function loadMe(): Me | null {

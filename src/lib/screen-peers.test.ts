@@ -1,25 +1,32 @@
 import { describe, expect, it, vi } from "vitest";
 import { ScreenPeers } from "./screen-peers";
 function fixture(id = "viewer") {
-  const connections: any[] = [];
+  const connections: ReturnType<typeof createConnection>[] = [];
   const send = vi.fn(),
     receive = vi.fn();
-  const create = () => {
-    const pc: any = {
+  function createConnection() {
+    const pc = {
+      localDescription: null as RTCSessionDescriptionInit | null,
+      remoteDescription: null as RTCSessionDescriptionInit | null,
+      ontrack: (_event: { streams: object[] }) => {},
       close: vi.fn(),
       addTrack: vi.fn(),
       addIceCandidate: vi.fn(),
       createOffer: async () => ({ type: "offer", sdp: "offer" }),
       createAnswer: async () => ({ type: "answer", sdp: "answer" }),
-      setLocalDescription: async (d: any) => {
+      setLocalDescription: async (d: RTCSessionDescriptionInit) => {
         pc.localDescription = d;
       },
-      setRemoteDescription: async (d: any) => {
+      setRemoteDescription: async (d: RTCSessionDescriptionInit) => {
         pc.remoteDescription = d;
       },
     };
+    return pc;
+  }
+  const create = () => {
+    const pc = createConnection();
     connections.push(pc);
-    return pc as RTCPeerConnection;
+    return pc as unknown as RTCPeerConnection;
   };
   return { peers: new ScreenPeers(id, send, receive, vi.fn(), create), send, receive, connections };
 }
@@ -46,18 +53,18 @@ describe("screen share signalling", () => {
       "host",
       "live",
     );
-    expect(f.connections[0].addIceCandidate).not.toHaveBeenCalled();
+    expect(f.connections[0]!.addIceCandidate).not.toHaveBeenCalled();
     await f.peers.message(
       { ...base, kind: "offer", description: { type: "offer", sdp: "offer" } },
       "host",
       "live",
     );
-    expect(f.connections[0].addIceCandidate).toHaveBeenCalledWith({ candidate: "early" });
+    expect(f.connections[0]!.addIceCandidate).toHaveBeenCalledWith({ candidate: "early" });
     expect(f.send).toHaveBeenCalledWith(
       expect.objectContaining({ to: "host", kind: "answer", session: "live" }),
     );
     const stream = {};
-    f.connections[0].ontrack({ streams: [stream] });
+    f.connections[0]!.ontrack({ streams: [stream] });
     expect(f.receive).toHaveBeenCalledWith(stream);
   });
   it("fans out capture tracks, replaces a retry and closes departed peers", async () => {
@@ -66,18 +73,18 @@ describe("screen share signalling", () => {
     f.peers.share({ getTracks: () => tracks } as unknown as MediaStream, "live");
     const request = { from: "viewer", to: "host", session: "live", kind: "request" };
     await f.peers.message(request, null, null);
-    expect(f.connections[0].addTrack).toHaveBeenCalledTimes(2);
+    expect(f.connections[0]!.addTrack).toHaveBeenCalledTimes(2);
     await f.peers.message(
       { from: "second", to: "host", session: "live", kind: "request" },
       null,
       null,
     );
     await f.peers.message(request, null, null);
-    expect(f.connections[0].close).toHaveBeenCalled();
+    expect(f.connections[0]!.close).toHaveBeenCalled();
     expect(f.connections).toHaveLength(3);
     f.peers.retain(new Set(["viewer"]));
-    expect(f.connections[1].close).toHaveBeenCalled();
+    expect(f.connections[1]!.close).toHaveBeenCalled();
     f.peers.reset();
-    expect(f.connections[2].close).toHaveBeenCalled();
+    expect(f.connections[2]!.close).toHaveBeenCalled();
   });
 });

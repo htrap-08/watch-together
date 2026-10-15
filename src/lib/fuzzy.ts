@@ -32,7 +32,11 @@ function termScore(term: string, word: string): number {
 export function fuzzyScore(query: string, fields: string[]): number {
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
   if (!terms.length) return 1;
-  const words = fields.join(" ").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  const words = fields
+    .join(" ")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
   let total = 0;
   for (const t of terms) {
     let best = 0;

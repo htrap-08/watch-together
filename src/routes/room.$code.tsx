@@ -29,7 +29,8 @@ import { resolveVideo } from "@/lib/catalog";
 import { ScreenSharePanel } from "@/components/screen-share-panel";
 import { loadMe, saveMe } from "@/lib/identity";
 import { useRoom, type Me } from "@/lib/room-engine";
-import { correctionFor, expectedPosition, shouldBePlaying } from "@/lib/sync";
+import { syncPlayer } from "@/lib/player-sync";
+import { RoomDiagnostics } from "@/components/room-diagnostics";
 import {
   ReadyLobby,
   RoomRecovery,
@@ -155,21 +156,17 @@ function Room() {
         setNeedsPlay(false);
         return;
       }
-      const now = room.hostNow();
-      const exp = expectedPosition(pb, now);
-      const playing = shouldBePlaying(pb, now);
-      if (playing && el.paused)
-        void el
-          .play()
-          .then(() => setNeedsPlay(false))
-          .catch(() => setNeedsPlay(true));
-      if (!playing && !el.paused) el.pause();
-      if (el.readyState < 2) return;
-      const c = correctionFor(el.currentTime, exp);
-      if (c.kind === "seek") el.currentTime = c.target;
-      el.playbackRate = c.rate;
-      room.driftRef.current = el.currentTime - exp;
-    }, 250);
+      const observation = syncPlayer(el, pb, room.hostNow(), setNeedsPlay);
+      if (observation) {
+        room.driftRef.current = observation.actual - observation.expected;
+        room.api.observePlayer(
+          observation.actual,
+          observation.expected,
+          observation.applied,
+          observation.sampleable,
+        );
+      }
+    }, 50);
     return () => clearInterval(id);
   });
   useEffect(() => {
@@ -330,6 +327,29 @@ function Room() {
               Streaming service
             </button>
           </div>
+          {watchMode !== "direct" && (
+            <div className="cross-mode-reactions">
+              <div className="reactions" aria-label="Send a reaction">
+                {["😂", "😱", "🔥", "❤️", "👏"].map((emoji) => (
+                  <button
+                    key={emoji}
+                    disabled={!connected}
+                    aria-label={`React ${emoji}`}
+                    onClick={() => room.api.react(emoji, 0, watchMode)}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+              <div className="reaction-messages" aria-live="polite">
+                {room.floats.map((f) => (
+                  <span key={f.id}>
+                    {f.name}: {f.emoji}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           {watchMode === "share" ? (
             <ScreenSharePanel code={code} id={me.id} isHost={room.isHost} connected={connected} />
           ) : watchMode === "stream" ? (
@@ -553,6 +573,7 @@ function Room() {
                     : undefined
                 }
               />
+              <RoomDiagnostics room={room} code={code} />
               <details className="room-library" id="room-discover">
                 <summary>
                   Add your own video <Plus size={16} />

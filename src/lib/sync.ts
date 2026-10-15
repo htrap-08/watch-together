@@ -13,7 +13,7 @@ export type Playback = {
   by: string;
 };
 
-export const SEEK_THRESHOLD = 1.0; // s — hard seek above this drift
+export const SEEK_THRESHOLD = 0.5; // s — hard seek above this drift
 export const NUDGE_THRESHOLD = 0.12; // s — rate nudge above this drift
 export const NUDGE_RATE = 0.06; // ±6% playback rate while catching up
 
@@ -42,7 +42,8 @@ export function correctionFor(actual: number, expected: number): Correction {
   const drift = actual - expected;
   const abs = Math.abs(drift);
   if (abs >= SEEK_THRESHOLD) return { kind: "seek", rate: 1, target: expected };
-  if (abs >= NUDGE_THRESHOLD) return { kind: "nudge", rate: drift > 0 ? 1 - NUDGE_RATE : 1 + NUDGE_RATE };
+  if (abs >= NUDGE_THRESHOLD)
+    return { kind: "nudge", rate: drift > 0 ? 1 - NUDGE_RATE : 1 + NUDGE_RATE };
   return { kind: "none", rate: 1 };
 }
 
@@ -59,7 +60,9 @@ export type ElectableMember = { id: string; joinedAt: number };
 /** Longest-present member becomes host; ties broken by id. */
 export function electHost<T extends ElectableMember>(members: T[]): T | null {
   if (!members.length) return null;
-  return [...members].sort((a, b) => a.joinedAt - b.joinedAt || a.id.localeCompare(b.id))[0] ?? null;
+  return (
+    [...members].sort((a, b) => a.joinedAt - b.joinedAt || a.id.localeCompare(b.id))[0] ?? null
+  );
 }
 
 export type ClockSample = { t0: number; th: number; t1: number };

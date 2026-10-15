@@ -1,145 +1,154 @@
 # Watch Together
 
-A real-time watch-party app with synchronized playback, movie discovery, chat,
-reactions, shared queues, polls, and host transfer.
+A film-club watch-party app with synchronized direct-video playback, real movie and
+series discovery for India, room chat, reactions, shared queues, polls, host
+transfer, streaming-service companions and optional tab sharing.
 
-## Development
+Live: https://watch-together-lyart.vercel.app/
 
-Requires Node.js 22.12+ (or 24+) and npm.
+## Run locally
+
+Node.js 22.12+ or 24+ and npm are required.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open the URL printed by Vite. This starts the web app and the included WebSocket
-room server on port 3001. Other devices on your network can open the app using
-your computer's LAN address; allow both ports through the firewall.
-No backend account or API key is required.
+Open the Vite URL printed in the terminal. The web app and the included WebSocket
+relay run together; the relay defaults to port 3001. For other devices, use your
+computer's printed LAN address and allow both ports through the firewall. Direct
+video rooms do not require an external backend. Persistent film clubs require
+server-only `REDIS_URL`; see `.env.example`. Never put that value in a `VITE_` variable.
 
-## Production
+## Viewing modes
+
+- **Video link:** everyone loads an accessible MP4/WebM. Playback, queue, readiness,
+  intermission, chat, emoji reactions, polls and host controls are shared. The
+  host starts after all viewers mark ready. No extension is required.
+- **Streaming service:** every viewer opens the same title on their own service,
+  with authorized account access, and connects the desktop Chrome/Edge companion.
+  Website-to-extension handoff prefills setup but does not grant permissions or
+  connect a tab silently. Commercial adapters remain experimental; fixture tests
+  are not proof of Netflix or another current signed-in player.
+- **Screen share:** the host captures an unprotected browser tab. Chrome/Edge tab
+  audio is the preferred path. Direct WebRTC peers use public STUN; there is no
+  TURN media relay or SFU. Restrictive networks and host upload bandwidth can
+  limit delivery. This mode does not bypass DRM or grant retransmission rights.
+
+The website and extension each have their own host role. Website polls and chat
+work across modes. Queues and post-film direct-player reviews apply to direct
+videos; choosing a protected title does not enqueue its page URL as an MP4.
+
+## Discovery
+
+The homepage displays real movies and series with India platform labels, links,
+source references and the date checked. The current list is a researched snapshot
+from JustWatch India movie charts and Netflix India's weekly series chart,
+checked on 15 October 2026. It is not a live ranking API. Keep `src/lib/discovery-data.json`
+updated when making new availability claims; check regional service access first.
+
+Format, genre and platform filters combine. Search tolerates typos. Chosen genre
+tastes reorder the chart-based recommendations. “Plan a watch party” carries the
+selection into a new streaming room; each viewer must open the actual title and
+connect their extension before synchronization starts.
+
+## Film clubs
+
+`/clubs` creates reusable unlisted film-club invites. Redis persists shared shelves,
+scheduled screenings, RSVPs, history and spoiler-hidden reviews. Calendar downloads
+use local display times and UTC iCalendar timestamps. Names are not verified accounts.
+
+The creator's separate host key is saved in their browser. Save it privately using
+Host key & recovery. It permits scheduling, cancellation and completion; it is not
+part of the public invite. The API checks origins, owner secrets, input bounds and
+rate limits. Atomic compare-and-set updates preserve concurrent RSVPs.
+
+## Reliability
+
+Direct-player events use monotonic sequences and a deterministic user-ID tie-break.
+Full snapshots restore missed room state on initial join and reconnection, including
+when the host and epoch are unchanged. Controls remain unavailable during recovery.
+Simultaneous poll creation resolves by version then poll ID, independently of delivery
+order. Same-poll replays cannot reopen a closed poll. Host anchors repeat every three
+seconds; host election follows presence loss. Abrupt network loss takes longer to
+detect than closing a tab normally.
+
+Clock offsets use low-RTT ping samples. Direct players check every 50 ms; drift below
+120 ms is ignored, moderate drift changes speed by ±6%, and drift at or above 500 ms
+seeks. Paused players seek because rate changes cannot correct a paused clock.
+
+## Measurements and submission
+
+Open `/diagnostics` and run the ten-player check. It uses ten native video elements,
+ten independent room engines and the actual relay, with a fixed W3C media fixture.
+The workload contains thirty play/pause/seek controls plus a final cleanup pause and
+a deliberate 0.8-second drift. The raw report records every viewer, timestamps,
+browser, topology, samples and target checks. Keep the page in the foreground.
+
+The recorded loopback report is served at `/verification/loopback.json`. This is a
+single-computer browser test, not a claim of ten physical LAN devices or universal
+streaming-service compatibility. See `docs/SUBMISSION.md` and the site's `/docs` page
+for measured results, scope and the actual-LAN test procedure.
+
+Real screening rooms expose **Playback measurements**: per-viewer applied-control
+latency p50/p95, settled drift and JSON export with test conditions. Latency measures
+command issue to observed native media state; scheduled countdowns are excluded.
+Drift is sampled after a 500 ms settling window without discarding excessive values.
+Collect every remote viewer's export before calculating a room-wide p95. Clock
+estimation and buffering introduce uncertainty; record failures as well as passes.
+
+## Deploy
 
 ### Vercel
 
-The checked-in Vercel configuration builds the web app and `/api/realtime`
-WebSocket endpoint together. Connect an Upstash Redis database to the project
-and supply its server-only `REDIS_URL` in production and preview environments.
-The browser and extension use the same deployment's secure WebSocket endpoint.
-Redis shares presence and streaming state between function instances; room
-mutations use a lease and atomic state/event commit to preserve host authority.
-Inactive room records expire after one hour and dead connections after one minute.
-Clients reconnect when a Vercel function reaches its connection duration limit.
+`vercel.json` builds the web app and `/api/realtime` WebSocket endpoint together.
+Connect an Upstash Redis database and supply server-only `REDIS_URL`. The browser
+and companion default to the deployment's secure endpoint. Redis leases and atomic
+state/event commits serialize streaming mutations across function instances.
+Inactive room records expire after one hour; dead connections expire after one
+minute. Clients reconnect when a function connection reaches its duration limit.
+Film-club records have separate persistence without the room TTL.
 
 ```sh
-vercel deploy --prod
+vercel deploy --prod --scope htrap-08
 ```
 
-Use the free Redis plan with `autoUpgrade=false` to avoid automatic paid upgrades.
-To check cross-instance behavior against a configured database, run
-`node --env-file=.env.local --test realtime/distributed.test.mjs`.
+The current account uses the free Redis plan with paid auto-upgrades disabled.
+GitHub source is maintained separately; automatic Git-based deployment is not assumed.
+When deploying a source snapshot, ensure deleted files are also removed from it.
 
-### A dedicated Node server
+### Dedicated Node server
 
 ```sh
 npm run build
 npm start
 ```
 
-Deploy both Node processes to your own server. Reverse-proxy the web app and
-WebSocket service with HTTPS/WSS. Set `VITE_REALTIME_URL` before building to the
-public WebSocket URL (for example, `wss://realtime.example.com`). Set
-`REALTIME_ORIGINS` on the realtime process to a comma-separated list of permitted
-web app origins. `REALTIME_PORT` defaults to 3001. See `.env.example`.
+Run both processes behind HTTPS/WSS. Set `VITE_REALTIME_URL` to the public relay URL
+before building and configure `REALTIME_ORIGINS` on the realtime process for allowed
+web and extension origins. `REALTIME_PORT` defaults to 3001. This relay uses memory;
+rooms disappear after all participants leave or after a full restart. Room codes
+provide access without accounts; this is a project prototype, not a hardened service.
 
-Rooms use in-memory membership and client-replicated state. Late joins request
-state from existing participants; reconnecting clients restore their presence.
-The service runs as a single instance; room history is not persisted after every
-participant leaves or across a full restart. Room codes provide access, without
-account authentication. This is an in-progress prototype, not a hardened public
-service. Production rate limits and persistence remain future work.
-
-## Validation
+## Checks
 
 ```sh
 npm test
+npm run lint
+npx tsc --noEmit
+npm run test:extension
 npm run test:realtime
+node --test server/clubs.test.mjs
+node --env-file=.env.local --test server/clubs.integration.test.mjs realtime/distributed.test.mjs
 npm run build
 ```
 
-The realtime integration test checks ten simultaneous connections, isolated
-rooms, membership updates, event forwarding, and reconnects. The app's `/docs`
-page describes playback synchronization and failure handling. Targets of 250 ms
-control latency at p95 and 500 ms corrected drift require measurement on the
-actual deployment; unit tests do not establish those guarantees.
-
-## Streaming services
-
-The `/streaming` page provides the installable companion extension and honest
-compatibility notes. Select **Streaming service** in a room, copy its extension
-setup, and connect from each viewer's own streaming tab. See
-[extension/README.md](extension/README.md) for installation, service adapters,
-permissions, deployment, and limitations.
-
-The streaming relay owns host-authoritative playback state and restores it for
-late joiners. It shares room chat with the website, while direct-video playback
-remains a separate mode. The first streaming participant becomes host. Every
-participant must have authorized access to the same title; protected video is
-never captured or forwarded.
-
-Commercial service adapters require signed-in testing before claiming verified
-support. This package currently targets desktop Chrome and Edge.
-
-## Film clubs and screening features
-
-- `/clubs` creates and remembers reusable film-club invite links. Redis stores the
-  shared shelf, scheduled screenings, RSVPs, history and reviews without a room TTL.
-- The creator's separate host key is stored in their browser. Save a private copy
-  from the club's Host key & recovery section to restore scheduling privileges on
-  another device. The public invite never contains the host key. Anyone with the
-  invite can view the club, add films, RSVP and review completed screenings; names
-  are not verified accounts. Owner writes, origin checks, bounded input and atomic
-  compare-and-set updates are enforced by the club API.
-- Scheduled screenings use a stable room link and offer an iCalendar download.
-  Dates are shown in the visitor's local timezone. A club host ending the scheduled
-  film records it in history; post-film reviews can then be saved to the club.
-- Direct-video rooms start paused. Each viewer marks ready after their player
-  loads; the host starts or resumes together. Anyone can request an intermission.
-- Theatre mode hides room navigation and the video-link form. Chat can remain visible,
-  stay hidden, or appear only when playback is paused.
-- Companion v0.2 adds a narrowly scoped website handshake. Send room to extension
-  stages the setup, then the user opens the film and clicks the extension to approve
-  site access. No silent installation or permission grant occurs. Existing unpacked
-  users must replace the files, reload the extension and refresh their room.
-- Commercial streaming adapters remain experimental pending signed-in service
-  testing. The compatibility page distinguishes this from fixture-tested HTML5
-  behavior. No protected video is captured or forwarded.
-
-Additional validation:
+To check the companion worker against a deployed relay with simulated browser APIs:
 
 ```sh
-node --test server/clubs.test.mjs
-node --env-file=.env.local --test server/clubs.integration.test.mjs realtime/distributed.test.mjs
+TEST_REALTIME_URL=wss://watch-together-lyart.vercel.app/api/realtime node --test extension/tests/background.test.mjs
 ```
 
-## Screen sharing and service selection
-
-The homepage has two viewing paths and no recommended/sample films. Screen-share
-mode (`?watch=share`) uses `getDisplayMedia` after a host click and WebRTC peers
-signalled through the existing authenticated-by-room-invite WebSocket transport.
-The relay forwards SDP/ICE, not captured media. Streams and peers close on stop,
-unmount or host loss; late viewers request the current session. Google’s public
-STUN server discovers connectivity; there is no TURN service, so restrictive NAT
-and firewalls can prevent delivery. A host uploads one copy per viewer; this is
-not an SFU and ten-viewer bandwidth/latency has not been certified.
-
-Ordinary YouTube/Twitch and non-DRM Vimeo videos are capture candidates, not a
-blanket promise of capture or permission to retransmit. Protected titles use
-separate playback with the companion, each viewer having their own access.
-Current subscription-service integrations remain experimental. Sources and
-installation instructions are linked on `/streaming`. Legacy sample IDs are
-resolved only to keep previously saved rooms/screenings working; there is no
-catalog browsing, default sample or recommendation engine in the UI.
-
-Screen signalling tests cover stale/foreign messages, early ICE, negotiation,
-multiple viewers, retries and cleanup using fake peer connections. Live browser
-capture and signed-in service compatibility require manual verification.
+The extension ZIP is regenerated before builds. Installation and service limitations
+are documented at `/streaming` and in `extension/README.md`.

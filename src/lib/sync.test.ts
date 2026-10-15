@@ -1,8 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { acceptHostClaim, correctionFor, electHost, estimateClock, expectedPosition, isNewerPlayback, percentile, shouldBePlaying, type Playback } from "./sync";
+import {
+  acceptHostClaim,
+  correctionFor,
+  electHost,
+  estimateClock,
+  expectedPosition,
+  isNewerPlayback,
+  percentile,
+  shouldBePlaying,
+  type Playback,
+} from "./sync";
 import { fuzzyScore } from "./fuzzy";
 
-const pb = (p: Partial<Playback>): Playback => ({ videoId: "x", playing: true, position: 10, at: 1000, seq: 1, by: "b", ...p });
+const pb = (p: Partial<Playback>): Playback => ({
+  videoId: "x",
+  playing: true,
+  position: 10,
+  at: 1000,
+  seq: 1,
+  by: "b",
+  ...p,
+});
 
 describe("sync math", () => {
   it("advances expected position while playing", () => {
@@ -18,8 +36,9 @@ describe("sync math", () => {
     expect(isNewerPlayback(pb({ seq: 3, by: "b" }), pb({ seq: 3, by: "a" }))).toBe(true);
     expect(isNewerPlayback(pb({ seq: 3, by: "a" }), pb({ seq: 3, by: "b" }))).toBe(false);
   });
-  it("seeks above 1s drift, nudges above 120ms, ignores below", () => {
+  it("seeks at 500ms drift, nudges above 120ms, ignores below", () => {
     expect(correctionFor(12, 10).kind).toBe("seek");
+    expect(correctionFor(10.7, 10).kind).toBe("seek");
     expect(correctionFor(10.3, 10)).toEqual({ kind: "nudge", rate: 0.94 });
     expect(correctionFor(9.7, 10)).toEqual({ kind: "nudge", rate: 1.06 });
     expect(correctionFor(10.05, 10).kind).toBe("none");
@@ -30,14 +49,27 @@ describe("sync math", () => {
     expect(acceptHostClaim({ hostId: "a", epoch: 2 }, { hostId: "b", epoch: 1 })).toBe(false);
   });
   it("elects the longest-present member", () => {
-    expect(electHost([{ id: "z", joinedAt: 5 }, { id: "y", joinedAt: 2 }])?.id).toBe("y");
+    expect(
+      electHost([
+        { id: "z", joinedAt: 5 },
+        { id: "y", joinedAt: 2 },
+      ])?.id,
+    ).toBe("y");
   });
   it("estimates clock offset from the lowest-RTT sample", () => {
-    const c = estimateClock([{ t0: 0, th: 600, t1: 200 }, { t0: 1000, th: 1520, t1: 1040 }]);
+    const c = estimateClock([
+      { t0: 0, th: 600, t1: 200 },
+      { t0: 1000, th: 1520, t1: 1040 },
+    ]);
     expect(c).toEqual({ offset: 500, rtt: 40 });
   });
   it("computes p95", () => {
-    expect(percentile(Array.from({ length: 100 }, (_, i) => i + 1), 95)).toBe(95);
+    expect(
+      percentile(
+        Array.from({ length: 100 }, (_, i) => i + 1),
+        95,
+      ),
+    ).toBe(95);
   });
 });
 

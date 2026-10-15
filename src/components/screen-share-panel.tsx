@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { RealtimeChannel } from "@/lib/realtime-channel";
 import { ScreenPeers } from "@/lib/screen-peers";
 
@@ -29,7 +29,7 @@ export function ScreenSharePanel({
   const [audio, setAudio] = useState(true);
   const [live, setLive] = useState(false);
   const [busy, setBusy] = useState(false);
-  function stop() {
+  const stop = useCallback(() => {
     activeSession.current = null;
     const stream = captured.current;
     captured.current = null;
@@ -42,7 +42,7 @@ export function ScreenSharePanel({
     setSharing(false);
     setReceiving(false);
     channel.current?.track({ id, session: null });
-  }
+  }, [id]);
   useEffect(() => {
     alive.current = true;
     const transport = new RealtimeChannel(`share_${code}`, id);
@@ -102,10 +102,10 @@ export function ScreenSharePanel({
       peers.current = null;
       host.current = null;
     };
-  }, [code, id]);
+  }, [code, id, stop]);
   useEffect(() => {
     if (!isHost && captured.current) stop();
-  }, [isHost]);
+  }, [isHost, stop]);
   async function start() {
     setError("");
     setBusy(true);

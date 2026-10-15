@@ -1,73 +1,131 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-
 export const Route = createFileRoute("/docs")({
-  head: () => ({
-    meta: [
-      { title: "How sync works — Watch Together" },
-      {
-        name: "description",
-        content:
-          "Sync protocol, latency measurement method and failure handling for Watch Together.",
-      },
-      { property: "og:title", content: "How sync works — Watch Together" },
-      {
-        property: "og:description",
-        content: "Sync protocol, latency measurement and failure handling.",
-      },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Sync, measurements & submission — Watch Together" }] }),
   component: Docs,
 });
-
 function Docs() {
   return (
-    <main className="mx-auto max-w-3xl space-y-6 px-6 py-12">
-      <Link to="/" className="text-sm text-muted-foreground">
-        ← Home
-      </Link>
-      <h1 className="text-4xl font-extrabold">How sync works</h1>
-      <p className="text-muted-foreground">
-        Playback is a shared anchor: position + host-clock timestamp + sequence number. Every viewer
-        computes where the video should be right now.
+    <main className="club-site diagnostics-page">
+      <header className="club-nav">
+        <Link to="/">← Watch Together</Link>
+        <Link to="/diagnostics">Run playback verification</Link>
+      </header>
+      <h1>How the room stays together.</h1>
+      <p>
+        Direct videos share a playback position, host-clock timestamp and sequence number. Every
+        viewer projects the current position using that anchor. The extension uses a separate,
+        server-authoritative timeline for streaming-service tabs. Screen sharing sends a single
+        captured stream over peer connections.
       </p>
-      <h2 className="text-2xl font-bold">Clock & latency</h2>
-      <p className="text-muted-foreground">
-        Viewers estimate their offset to the host clock with NTP-style pings (lowest round-trip
-        sample of the last 12). Each control message carries its send time, so receive delay is
-        measured per message; p50/p95 are computed in-app.
+      <h2>Timing & correction</h2>
+      <p>
+        Direct players check their native video state every 50 ms. Drift below 120 ms is ignored.
+        Between 120 and 500 ms, playback speed changes by ±6%. At 500 ms or more, the player seeks.
+        Paused players seek instead of trying to catch up through playback speed. Scheduled starts
+        remain paused until the agreed start time.
       </p>
-      <h2 className="text-2xl font-bold">Drift correction</h2>
-      <p className="text-muted-foreground">
-        Drift under 120 ms is ignored; 120 ms–1 s is fixed by ±6% playback speed; above 1 s triggers
-        a seek. Target after correction: under 500 ms.
+      <p>
+        Clients estimate host-clock offset using the lowest-round-trip sample among the last twelve
+        pings. Measurement accuracy depends on that estimate; device clocks, asymmetric networks and
+        browser scheduling introduce uncertainty.
       </p>
-      <h2 className="text-2xl font-bold">Failure handling</h2>
-      <ul className="list-disc space-y-1 pl-6 text-muted-foreground">
+      <h2>What has been measured?</h2>
+      <p>
+        The published report records ten independent room connections and ten native video elements
+        in a single desktop browser, using a local Node relay and a fixed W3C fixture. It records
+        thirty test controls plus a final pause. The report contains raw per-viewer latency and
+        drift samples, timestamps, browser and topology.
+      </p>
+      <p>
+        <a href="/verification/loopback.json">Download the recorded loopback measurements</a> ·{" "}
+        <Link to="/diagnostics">Repeat the browser check</Link>
+      </p>
+      <p>
+        Recorded on 15 October 2026: ten players, 279 remote control observations, p50 38.5 ms, p95
+        132.5 ms and maximum settled drift 98.3 ms across 2565 samples. Both targets passed for that
+        recorded loopback run.
+      </p>
+      <p>
+        This single-computer loopback test does not certify ten physical devices on your LAN,
+        protected streaming services, or ten-recipient screen-sharing bandwidth. Results are
+        observations for the recorded conditions, not universal guarantees.
+      </p>
+      <h2>Measure your actual LAN</h2>
+      <ol>
         <li>
-          Late join / reconnect: newcomer requests state; host (or longest-present guest) replies.
+          Run <code>npm run dev</code> on the host. Open the printed LAN address on ten viewers,
+          allowing the web and realtime ports through your firewall.
         </li>
-        <li>Concurrent actions: higher sequence wins, ties go to the lowest user id.</li>
         <li>
-          Host leaves: after 3 s the longest-present viewer takes over and re-anchors playback.
+          Join the same room in Video link mode. Use one accessible MP4 or WebM URL, wait for all
+          players and mark every viewer ready.
         </li>
-        <li>Missed messages: the host re-broadcasts the anchor every 3 s.</li>
+        <li>
+          Record devices, browsers, wired/Wi-Fi connections, video resolution, network conditions
+          and buffering. Warm up playback and clock synchronization.
+        </li>
+        <li>
+          Open “Playback measurements” in each viewer. Exercise at least thirty play/pause/seek
+          controls, then let playback settle for at least 500 ms after each control. Scheduled
+          countdowns are excluded from latency samples.
+        </li>
+        <li>
+          Export every viewer’s measurements. Combine remote-viewer samples to calculate p95
+          command-to-native-player-state latency; check each viewer’s absolute settled media drift.
+          Targets are ≤250 ms p95 and ≤500 ms drift.
+        </li>
+        <li>
+          Repeat late joins, network interruptions, host departure, concurrent controls and
+          simultaneous poll creation. Record failures alongside successful runs.
+        </li>
+      </ol>
+      <h2>Recovery & concurrency</h2>
+      <ul>
+        <li>
+          Reconnecting viewers temporarily disable controls and request a fresh full snapshot. An
+          authoritative snapshot from the same host can restore missed queue, chat and poll updates.
+        </li>
+        <li>
+          Playback controls use sequence numbers with a deterministic user-ID tie-break. Poll
+          creation uses a monotonic version and poll-ID tie-break, so simultaneous creation
+          converges. Replays of the same poll cannot reopen it.
+        </li>
+        <li>
+          The direct-room host broadcasts an anchor every three seconds. After a host disappears
+          from presence for three ticks, the longest-present viewer takes over. Detection can take
+          longer after an unclean network loss.
+        </li>
+        <li>
+          The streaming relay serializes updates under a Redis lease on Vercel. Late joiners receive
+          a snapshot; disconnected companions restore membership. Readiness and ad checks protect
+          startup and intermission.
+        </li>
+        <li>
+          Unloaded or blocked players show a recovery action. Captured screen-sharing tracks stop on
+          leaving the mode; restrictive networks can still prevent peer media without TURN.
+        </li>
       </ul>
-      <p className="text-sm text-muted-foreground">
-        These are design targets. Test conditions and measured playback latency have not been
-        recorded yet.
+      <h2>Discovery sources</h2>
+      <p>
+        Homepage recommendations are real movies and series for India, checked on 15 October 2026.
+        They are an editorial snapshot of recent JustWatch movie charts and Netflix’s India weekly
+        series chart, with per-title availability sources. Search tolerates typos; format, genre and
+        platform filters combine, and chosen tastes reorder recommendations. This is not a live
+        popularity API.
       </p>
-      <h2 className="text-2xl font-bold">Open film credits</h2>
-      <p className="text-muted-foreground">
-        Big Buck Bunny, Sintel, and Tears of Steel are Blender Foundation open films released under
-        Creative Commons Attribution 3.0. Videos stream from the official Blender and W3C media
-        hosts. Sintel and Big Buck Bunny trailers are labeled separately. The Tears of Steel cover
-        is an original illustration.
+      <h2>Media credits</h2>
+      <p>
+        The diagnostic fixture comes from{" "}
+        <a href="https://media.w3.org/2010/05/video/movie_300.mp4">W3C’s media test collection</a>.
+        Legacy open-film IDs and credits remain for saved rooms. Big Buck Bunny, Sintel and Tears of
+        Steel are Blender Foundation open films under Creative Commons Attribution 3.0.
+        Recommendation artwork remains the property of its respective rights holders.
       </p>
-      <div className="flex flex-wrap gap-5 text-sm text-primary">
-        <a href="https://peach.blender.org/about/">Big Buck Bunny credits ↗</a>
-        <a href="https://durian.blender.org/about/">Sintel credits ↗</a>
-        <a href="https://mango.blender.org/sharing/">Tears of Steel credits ↗</a>
-      </div>
+      <p>
+        <a href="https://peach.blender.org/about/">Big Buck Bunny credits</a> ·{" "}
+        <a href="https://durian.blender.org/about/">Sintel credits</a> ·{" "}
+        <a href="https://mango.blender.org/sharing/">Tears of Steel credits</a>
+      </p>
     </main>
   );
 }

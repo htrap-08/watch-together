@@ -1,4 +1,4 @@
-# Watch Together streaming companion — v0.2 preview
+# Watch Together streaming companion — v0.2.1 preview
 
 A Manifest V3 extension for desktop Chrome 116+ and Chromium-based Edge.
 The video stays on the streaming service. Every viewer uses their own authorized
@@ -18,7 +18,7 @@ and messages are sent to your configured Watch Together server.
 1. Create a Watch Together room and select **Streaming service**.
 2. Click **Send room to extension** in the room (v0.2). The setup and nickname are
    staged for the popup. **Copy extension setup** remains a fallback.
-3. Open a movie/episode on the streaming service and press play once.
+3. Open a movie/episode on the streaming service, press play once, then pause while friends join.
 4. Click the extension **on the video tab**, paste the setup, choose a nickname,
    and connect (the setup is already filled after a website handoff). Approve access to the selected site, detected player frames, and room server.
 5. Each friend repeats this from their own streaming tab and account.
@@ -32,14 +32,16 @@ and messages are sent to your configured Watch Together server.
 Keep the video tab open. Navigating on the same permitted origin is detected and
 re-attached. A new origin requires reconnecting and granting that origin.
 Closing or disconnecting the selected tab leaves the streaming room. If the
-host leaves, the next participant becomes host. Rooms are in-memory and are
-removed after their last streaming viewer and website observer leave.
+host leaves, the next participant becomes host. The dedicated Node relay keeps rooms
+in memory; Vercel stores shared streaming state in Redis with a one-hour inactive TTL.
+In both cases a room has no active streaming session after its last streaming viewer
+and website observer leave.
 
 ## Adapters and limits
 
 - Netflix: guarded access to the page's own player controls; HTML5 fallback.
 - YouTube: page player controls; HTML5 fallback.
-- Prime Video, Disney+, Hulu, Max/HBO Max: HTML5 discovery, player selectors,
+- Prime Video, Disney+, JioHotstar, Hulu, Max/HBO Max: HTML5 discovery, player selectors,
   and best-effort ad markers.
 - Apple TV+, Paramount+, Crunchyroll, Vimeo: HTML5 discovery.
 - Other sites: generic HTML5 discovery, including accessible open shadow roots.
@@ -63,8 +65,9 @@ supported by this package.
 
 ## Server deployment
 
-Local default: `ws://localhost:3001` with website `http://localhost:3000`.
-That connects only to the same computer. Friends elsewhere need your LAN address
+The packaged popup defaults to the public Watch Together website and its WSS endpoint.
+For local development, the website defaults to `ws://localhost:3001` and a Vite URL
+printed by `npm run dev`. A localhost address connects only to the same computer. Friends elsewhere need your LAN address
 or a deployed HTTPS website and public WSS realtime server. Copying the setup
 from a correctly configured website includes its backend URL automatically.
 
@@ -72,17 +75,17 @@ Set `VITE_REALTIME_URL=wss://your-realtime-host` before building the website.
 The popup's **Server settings** allows manual configuration when entering a plain
 six-character room code.
 
-If `REALTIME_ORIGINS` is set, add each allowed
-`chrome-extension://<extension-id>` origin alongside the website origin. The
+On a dedicated Node relay, if `REALTIME_ORIGINS` is set, add each allowed
+`chrome-extension://<extension-id>` origin alongside the website origin.
+The Vercel endpoint accepts its own website origin and Chrome extension origins. The
 unpacked extension ID is visible in the browser's extensions page and can differ
 between computers. Do not disable the origin restriction on a public server.
 A store-published extension would have one stable signed extension ID.
 
-The streaming protocol is host-authoritative. It is separate from sample-video
+The streaming protocol is host-authoritative. It is separate from direct-video
 replication, and both transports share room chat. Sessions persist across service
 worker restarts using `chrome.storage.session`; reconnects restore membership.
-Room codes are the current access mechanism. Accounts, persistent history, and
-production-grade abuse protection are not implemented. A 60-message-per-second
+Room codes are the current access mechanism. Room chat is temporary; film-club history is persisted separately. Accounts and comprehensive abuse protection are not implemented. A 60-message-per-second
 connection limit and 64 KiB payload cap protect the relay from simple floods.
 
 ## Build and verify

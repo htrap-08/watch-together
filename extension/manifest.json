@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Watch Together \u2014 Streaming Companion",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "minimum_chrome_version": "116",
   "description": "Connect the current video tab to your Watch Together room. Everyone streams from their own account.",
   "permissions": ["activeTab", "scripting", "storage"],

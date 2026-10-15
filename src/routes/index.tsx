@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
+import { MovieDiscovery } from "@/components/movie-discovery";
+import { selectionKey, type DiscoveryTitle } from "@/lib/discovery";
 import { loadMe, newRoomCode, saveMe } from "@/lib/identity";
 
 export const Route = createFileRoute("/")({
@@ -23,15 +25,19 @@ function Index() {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [source, setSource] = useState<"direct" | "stream" | "share">("share");
+  const [selection, setSelection] = useState<DiscoveryTitle | null>(null);
   const [mode, setMode] = useState<"create" | "join">("create");
   useEffect(() => setName(loadMe()?.name ?? ""), []);
   function go() {
     if (!name.trim() || (mode === "join" && code.length !== 6)) return;
     saveMe(name);
     sessionStorage.removeItem("watchparty:first-video");
+    const targetCode = mode === "create" ? newRoomCode() : code;
+    if (mode === "create" && source === "stream" && selection)
+      sessionStorage.setItem(selectionKey(targetCode), JSON.stringify(selection));
     void nav({
       to: "/room/$code",
-      params: { code: mode === "create" ? newRoomCode() : code },
+      params: { code: targetCode },
       search: source === "direct" ? {} : { watch: source },
     });
   }
@@ -97,7 +103,8 @@ function Index() {
                 in time.
               </p>
               <p className="service-names">
-                Netflix · Prime Video · Disney+ · Hulu · Max · Apple TV+ · Paramount+ · Crunchyroll
+                Netflix · Prime Video · JioHotstar · Disney+ · Hulu · HBO Max · Apple TV+ ·
+                Paramount+ · Crunchyroll
               </p>
               <p className="path-detail">
                 Everyone needs access to the title and the Chrome / Edge extension. Service
@@ -234,6 +241,11 @@ function Index() {
                 "Paste your own video link in the room. No extension needed."
               )}
             </p>
+            {source === "stream" && selection && (
+              <p className="club-source-note">
+                Tonight’s pick: <b>{selection.title}</b> · {selection.platform}
+              </p>
+            )}
             <button type="submit" className="club-submit">
               {mode === "create" ? "Open the room" : "Take your seat"}
               <ArrowRight size={18} />
@@ -245,6 +257,15 @@ function Index() {
           </div>
         </aside>
       </section>
+      <MovieDiscovery
+        onChoose={(title) => {
+          setSelection(title);
+          setSource("stream");
+          setMode("create");
+          nameInput.current?.focus();
+          nameInput.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
+      />
       <footer className="club-footer">
         <p>
           Stay for the credits. <span>Watch Together, by Parth.</span>

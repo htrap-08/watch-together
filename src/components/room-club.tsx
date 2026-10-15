@@ -27,7 +27,7 @@ export function RoomClub({
     return () => {
       cancelled = true;
     };
-  }, [ended, owner, club.id, screening?.id, screening?.completed]);
+  }, [ended, owner, club.id, screening, onUpdate]);
   return (
     <div className="room-club-banner">
       <Link to="/club/$id" params={{ id: club.id }}>

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClubsRouteImport } from './routes/clubs'
+import { Route as DiagnosticsRouteImport } from './routes/diagnostics'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as StreamingRouteImport } from './routes/streaming'
 import { Route as ClubIdRouteImport } from './routes/club.$id'
@@ -24,6 +25,11 @@ const IndexRoute = IndexRouteImport.update({
 const ClubsRoute = ClubsRouteImport.update({
   id: '/clubs',
   path: '/clubs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiagnosticsRoute = DiagnosticsRouteImport.update({
+  id: '/diagnostics',
+  path: '/diagnostics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsRoute = DocsRouteImport.update({
@@ -50,6 +56,7 @@ const RoomCodeRoute = RoomCodeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/clubs': typeof ClubsRoute
+  '/diagnostics': typeof DiagnosticsRoute
   '/docs': typeof DocsRoute
   '/streaming': typeof StreamingRoute
   '/club/$id': typeof ClubIdRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clubs': typeof ClubsRoute
+  '/diagnostics': typeof DiagnosticsRoute
   '/docs': typeof DocsRoute
   '/streaming': typeof StreamingRoute
   '/club/$id': typeof ClubIdRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/clubs': typeof ClubsRoute
+  '/diagnostics': typeof DiagnosticsRoute
   '/docs': typeof DocsRoute
   '/streaming': typeof StreamingRoute
   '/club/$id': typeof ClubIdRoute
@@ -75,13 +84,27 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/clubs' | '/docs' | '/streaming' | '/club/$id' | '/room/$code'
+    | '/'
+    | '/clubs'
+    | '/diagnostics'
+    | '/docs'
+    | '/streaming'
+    | '/club/$id'
+    | '/room/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/clubs' | '/docs' | '/streaming' | '/club/$id' | '/room/$code'
+  to:
+    | '/'
+    | '/clubs'
+    | '/diagnostics'
+    | '/docs'
+    | '/streaming'
+    | '/club/$id'
+    | '/room/$code'
   id:
     | '__root__'
     | '/'
     | '/clubs'
+    | '/diagnostics'
     | '/docs'
     | '/streaming'
     | '/club/$id'
@@ -91,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClubsRoute: typeof ClubsRoute
+  DiagnosticsRoute: typeof DiagnosticsRoute
   DocsRoute: typeof DocsRoute
   StreamingRoute: typeof StreamingRoute
   ClubIdRoute: typeof ClubIdRoute
@@ -111,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/clubs'
       fullPath: '/clubs'
       preLoaderRoute: typeof ClubsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagnostics': {
+      id: '/diagnostics'
+      path: '/diagnostics'
+      fullPath: '/diagnostics'
+      preLoaderRoute: typeof DiagnosticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs': {
@@ -147,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClubsRoute: ClubsRoute,
+  DiagnosticsRoute: DiagnosticsRoute,
   DocsRoute: DocsRoute,
   StreamingRoute: StreamingRoute,
   ClubIdRoute: ClubIdRoute,
