@@ -1,22 +1,87 @@
-import { useState } from "react";
-import { discovery, discoverTitles, type DiscoveryTitle } from "@/lib/discovery";
+import { useEffect, useState } from "react";
+import {
+  discovery,
+  discoverTitles,
+  mergeDiscovery,
+  indiaAvailabilityUrl,
+  type DiscoveryTitle,
+} from "@/lib/discovery";
+import { DiscoveryArtwork } from "./discovery-artwork";
+import type { SearchResponse } from "@/lib/discovery-search";
 export function MovieDiscovery({ onChoose }: { onChoose: (title: DiscoveryTitle) => void }) {
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState("All");
   const [genre, setGenre] = useState("All");
   const [platform, setPlatform] = useState("All");
   const [preferred, setPreferred] = useState<string[]>([]);
-  const genres = [...new Set(discovery.titles.flatMap((t) => t.genres))].sort();
-  const results = discoverTitles(query, kind, genre, platform, preferred);
+  const [remote, setRemote] = useState<{ query: string; titles: DiscoveryTitle[] }>({
+    query: "",
+    titles: [],
+  });
+  const [status, setStatus] = useState("");
+  const term = query.trim();
+  useEffect(() => {
+    if (term.length < 2) {
+      setStatus("");
+      return;
+    }
+    const controller = new AbortController();
+    setStatus("Searching the wider catalogue…");
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/discovery?q=${encodeURIComponent(term)}`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("Search unavailable");
+        const data: SearchResponse = await response.json();
+        if (controller.signal.aborted) return;
+        setRemote({ query: term, titles: data.titles });
+        setStatus(
+          data.unavailable.length
+            ? `${data.unavailable.join(" and ")} search is temporarily unavailable. Other results are still shown.`
+            : "",
+        );
+      } catch {
+        if (!controller.signal.aborted) {
+          setRemote({ query: term, titles: [] });
+          setStatus(
+            "Catalogue search is unavailable. Homepage matches are still shown; try again or check JustWatch below.",
+          );
+        }
+      }
+    }, 450);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [term]);
+  const catalogue = mergeDiscovery(discovery.titles, remote.query === term ? remote.titles : []);
+  const genres = [
+    ...new Set([...catalogue.flatMap((t) => t.genres), ...(genre === "All" ? [] : [genre])]),
+  ].sort();
+  // Providers already rank fuzzy title matches. Do not discard them with a second, stricter text match.
+  const local = discoverTitles(query, "All", "All", "All", preferred);
+  const candidates = term
+    ? mergeDiscovery(local, remote.query === term ? remote.titles : [])
+    : catalogue;
+  const results = discoverTitles("", kind, genre, platform, preferred, candidates);
+  const hidden = candidates.length - results.length;
+  const searching = status.startsWith("Searching");
+  const filtered = kind !== "All" || genre !== "All" || platform !== "All";
+  const clearFilters = () => {
+    setKind("All");
+    setGenre("All");
+    setPlatform("All");
+  };
   return (
     <section className="movie-discovery" id="discover" aria-labelledby="discovery-heading">
       <div className="discovery-title">
         <div>
-          <p className="path-number">THE WATCHLIST / INDIA</p>
+          <p className="path-number">THE WATCHLIST / WORLD CINEMA</p>
           <h2 id="discovery-heading">Something worth staying in for.</h2>
         </div>
         <p>
-          Movies & series from recent streaming charts.
+          Worldwide films & series. Streaming options for India.
           <br />
           Availability checked 15 October 2026.
         </p>
@@ -26,7 +91,8 @@ export function MovieDiscovery({ onChoose }: { onChoose: (title: DiscoveryTitle)
           Find a title
           <input
             type="search"
-            placeholder="Try a title, genre or platform…"
+            placeholder="Search movies & series, or browse by genre…"
+            maxLength={100}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -72,47 +138,98 @@ export function MovieDiscovery({ onChoose }: { onChoose: (title: DiscoveryTitle)
           </button>
         ))}
       </div>
-      <div className="discovery-results" aria-live="polite">
+      <div className="discovery-results" aria-live="polite" aria-busy={searching}>
         {results.length} {results.length === 1 ? "title" : "titles"}
         {preferred.length ? " · matching tastes first" : ""}
+        {hidden > 0 && ` · ${hidden} hidden by filters`}
+        {filtered && (
+          <button className="path-choice" onClick={clearFilters}>
+            Clear filters
+          </button>
+        )}
+        {query && (
+          <button className="path-choice" onClick={() => setQuery("")}>
+            Clear search
+          </button>
+        )}
       </div>
-      <div className="discovery-grid">
-        {results.map((t) => (
-          <article className="discovery-film" key={t.id}>
-            <div className="discovery-art">
-              {t.image && (
-                <img
-                  src={t.image}
-                  alt=""
-                  loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.style.visibility = "hidden";
-                  }}
-                />
-              )}
-              <span>{t.kind}</span>
+      {status && <p role="status">{status}</p>}
+      {term.length === 1 && <p>Type at least 2 characters to search beyond the homepage picks.</p>}
+      {[
+        { kind: "Movie", heading: "Movies" },
+        { kind: "Series", heading: "Series" },
+      ].map((group) => {
+        const titles = results.filter((t) => t.kind === group.kind);
+        if (!titles.length) return null;
+        return (
+          <section className="discovery-category" key={group.kind} aria-label={group.heading}>
+            <h3 className="discovery-category-heading">
+              {group.heading} <small>{titles.length}</small>
+            </h3>
+            <div className="discovery-grid">
+              {titles.map((t) => (
+                <article className="discovery-film" key={t.id}>
+                  <DiscoveryArtwork key={t.image} title={t} />
+                  <p className="discovery-platform">
+                    {t.availability === "unverified"
+                      ? "Indian streaming availability unverified"
+                      : `On ${t.platform} · India`}
+                  </p>
+                  <h4>
+                    {t.title}
+                    {t.year && <small> ({t.year})</small>}
+                  </h4>
+                  <p className="discovery-genres">{t.genres.join(" · ")}</p>
+                  <p className="discovery-chart">{t.chart}</p>
+                  <button className="path-choice" onClick={() => onChoose(t)}>
+                    Plan a watch party <span aria-hidden="true">↗</span>
+                  </button>
+                  <div className="discovery-links">
+                    <a href={t.url} target="_blank" rel="noreferrer">
+                      {t.availability === "unverified"
+                        ? "Check where to watch in India"
+                        : `${t.url.includes("/search?") ? "Find" : "Open"} on ${t.platform}`}
+                    </a>
+                  </div>
+                </article>
+              ))}
             </div>
-            <p className="discovery-platform">On {t.platform} · India</p>
-            <h3>{t.title}</h3>
-            <p className="discovery-genres">{t.genres.join(" · ")}</p>
-            <p className="discovery-chart">{t.chart}</p>
-            <button className="path-choice" onClick={() => onChoose(t)}>
-              Plan a watch party <span aria-hidden="true">↗</span>
-            </button>
-            <div className="discovery-links">
-              <a href={t.url} target="_blank" rel="noreferrer">
-                {t.url.includes("/search?") ? "Find" : "Open"} on {t.platform}
-              </a>
-              <a href={t.source} target="_blank" rel="noreferrer">
-                Source
-              </a>
-            </div>
-          </article>
-        ))}
-      </div>
-      {!results.length && <p>No matches. Try another spelling or clear a filter.</p>}
+          </section>
+        );
+      })}
+      {!results.length && !searching && (
+        <p>
+          No matches{filtered ? " with these filters" : " yet"}. Try the original title, a shorter
+          name or another spelling.
+        </p>
+      )}
+      {term.length >= 2 && (
+        <p className="compatibility-footnote">
+          Still missing a title?{" "}
+          <a href={indiaAvailabilityUrl(term)} target="_blank" rel="noreferrer">
+            Search “{term}” on JustWatch India ↗
+          </a>
+        </p>
+      )}
       <p className="compatibility-footnote">
-        A researched snapshot, not a live ranking or a complete catalogue. Movie selections:{" "}
+        Search goes beyond these picks using{" "}
+        <a href="https://en.wikipedia.org/" target="_blank" rel="noreferrer">
+          Wikipedia
+        </a>{" "}
+        movie metadata and{" "}
+        <a href="https://www.tvmaze.com/" target="_blank" rel="noreferrer">
+          TVmaze
+        </a>{" "}
+        series data (
+        <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">
+          CC BY-SA
+        </a>
+        ). These catalogues are not exhaustive. Search results do not confirm an Indian subscription
+        platform; use “Check where to watch” for current options.
+      </p>
+      <p className="compatibility-footnote">
+        Recent chart picks and international favourites, not a live ranking or a complete catalogue.
+        Indian chart selections:{" "}
         <a href="https://www.justwatch.com/in/streaming-charts" target="_blank" rel="noreferrer">
           JustWatch India
         </a>{" "}
@@ -120,7 +237,8 @@ export function MovieDiscovery({ onChoose }: { onChoose: (title: DiscoveryTitle)
         <a href="https://www.netflix.com/tudum/top10/india/tv" target="_blank" rel="noreferrer">
           Netflix India Top 10
         </a>{" "}
-        (5–11 October). Subscription access is separate from this site; service integrations remain
+        (5–11 October). International picks have individual availability sources above, checked 15
+        October. Subscription access is separate from this site; service integrations remain
         experimental.
       </p>
     </section>

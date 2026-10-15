@@ -9,7 +9,7 @@ describe("India movie discovery", () => {
     expect(titles.map((t) => t.id)).toEqual(["drishyam3"]);
   });
   it("puts preferred genres first without inventing platform availability", () => {
-    expect(discoverTitles("", "All", "All", "All", ["Comedy"])[0]?.id).toBe("kapil");
+    expect(discoverTitles("", "All", "All", "All", ["Comedy"])[0]?.genres).toContain("Comedy");
     expect(
       discovery.titles.every(
         (t) =>

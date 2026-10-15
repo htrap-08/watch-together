@@ -4,18 +4,18 @@ Updated: 15 October 2026. Live app: https://watch-together-lyart.vercel.app/
 
 ## Original requirement mapping
 
-| Requirement                                           | Implementation / evidence                                                                                                                                       |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Invite links and room codes                           | Homepage create/join, mode-preserving room links                                                                                                                |
-| Synchronized play, pause, seek                        | Shared host-clock anchors, deterministic control sequences, native HTML video synchronization                                                                   |
-| Movie recommendations, category filters, fuzzy search | Real India movie/series discovery on the homepage; format, genre and platform filters; typo tolerance; preferred-genre ranking; dated source and provider links |
-| Reactions, chat, playlists, polls, host transfer      | Website chat/polls/host controls; reactions in all modes; direct-video shared queue with voting; companion host controls                                        |
-| Automatic drift correction                            | 50 ms checks; ±6% speed nudges above 120 ms; seek at 500 ms; paused-player seek correction                                                                      |
-| Late join/reconnect/concurrent actions                | Full snapshot restore, recovery readiness gating, host election, deterministic playback and poll ordering; permanent regressions for both audited bugs          |
-| At least ten concurrent users                         | Ten WebSocket participants in integration tests and ten simultaneous native browser players in the recorded workload                                            |
-| ≤250 ms p95 local control latency                     | 132.5 ms measured in the recorded single-computer loopback run; physical-LAN validation remains separate                                                        |
-| ≤500 ms corrected drift                               | 98.3 ms maximum settled drift in the recorded loopback run, including a deliberate 0.8 s error; physical-LAN validation remains separate                        |
-| Measurements, test conditions, failure handling       | Raw `public/verification/loopback.json`, website `/docs`, repeatable `/diagnostics`, per-viewer room export, regression and integration tests                   |
+| Requirement                                           | Implementation / evidence                                                                                                                                                                                     |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Invite links and room codes                           | Homepage create/join, mode-preserving room links                                                                                                                                                              |
+| Synchronized play, pause, seek                        | Shared host-clock anchors, deterministic control sequences, native HTML video synchronization                                                                                                                 |
+| Movie recommendations, category filters, fuzzy search | Worldwide film/series catalogue search and international homepage picks with India availability; format, genre and platform filters; typo tolerance; preferred-genre ranking; dated source and provider links |
+| Reactions, chat, playlists, polls, host transfer      | Website chat/polls/host controls; reactions in all modes; direct-video shared queue with voting; companion host controls                                                                                      |
+| Automatic drift correction                            | 50 ms checks; ±6% speed nudges above 120 ms; seek at 500 ms; paused-player seek correction                                                                                                                    |
+| Late join/reconnect/concurrent actions                | Full snapshot restore, recovery readiness gating, host election, deterministic playback and poll ordering; permanent regressions for both audited bugs                                                        |
+| At least ten concurrent users                         | Ten WebSocket participants in integration tests and ten simultaneous native browser players in the recorded workload                                                                                          |
+| ≤250 ms p95 local control latency                     | 132.5 ms measured in the recorded single-computer loopback run; physical-LAN validation remains separate                                                                                                      |
+| ≤500 ms corrected drift                               | 98.3 ms maximum settled drift in the recorded loopback run, including a deliberate 0.8 s error; physical-LAN validation remains separate                                                                      |
+| Measurements, test conditions, failure handling       | Raw `public/verification/loopback.json`, website `/docs`, repeatable `/diagnostics`, per-viewer room export, regression and integration tests                                                                 |
 
 ## Recorded browser run
 
@@ -55,4 +55,4 @@ Run the README check commands before submission. The prior reconnect and poll re
 
 Screen sharing uses peer-to-peer media without TURN or an SFU; restrictive networks and host bandwidth remain limitations. Streaming service adapters are preview integrations, including JioHotstar's generic HTML5 selector; signed-in Netflix/Prime/JioHotstar behavior is not certified by fixture tests. Extension installation is manual and documented on `/streaming`. Core queue/review behavior uses the direct player, while protected-title selection stays on its service.
 
-Recommendations are a curated, sourced snapshot checked on 15 October, not an automatic real-time feed. Refresh the data before claiming later availability. No account or browser-store publication is required for the direct-video core demo.
+Recommendations include international and Indian titles in separate Movies and Series groups. They are a curated snapshot checked on 15 October, not an automatic real-time feed. Search additionally uses Wikipedia film and TVmaze series catalogues, with debouncing, partial failure recovery, cached responses, poster artwork and explicit unverified availability. Catalogue coverage is not exhaustive. Refresh the data before claiming later availability. No account or browser-store publication is required for the direct-video core demo.

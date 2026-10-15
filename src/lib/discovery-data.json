@@ -3,6 +3,46 @@
   "checkedAt": "2026-10-15",
   "titles": [
     {
+      "id": "inception",
+      "title": "Inception",
+      "kind": "Movie",
+      "year": "2010",
+      "language": "English",
+      "genres": ["Science fiction", "Thriller", "Action"],
+      "platform": "Prime Video",
+      "source": "https://www.justwatch.com/in/movie/inception",
+      "url": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.04a9f72c-f9c8-c4d1-f97b-6d7ad986a51f",
+      "chart": "World cinema · English",
+      "image": "https://images.justwatch.com/backdrop/275196554/s640/inception.avif"
+    },
+    {
+      "id": "spirited-away",
+      "title": "Spirited Away",
+      "kind": "Movie",
+      "year": "2001",
+      "language": "Japanese",
+      "genres": ["Animation", "Anime", "Fantasy", "Family"],
+      "platform": "Netflix",
+      "source": "https://www.justwatch.com/in/movie/spirited-away",
+      "url": "https://www.netflix.com/title/60023642",
+      "chart": "World cinema · Japanese",
+      "image": "https://images.justwatch.com/backdrop/176258301/s640/spirited-away.avif",
+      "aliases": ["Sen to Chihiro no Kamikakushi", "千と千尋の神隠し"]
+    },
+    {
+      "id": "dune-part-two",
+      "title": "Dune: Part Two",
+      "kind": "Movie",
+      "year": "2024",
+      "language": "English",
+      "genres": ["Science fiction", "Adventure", "Action"],
+      "platform": "Netflix",
+      "source": "https://www.justwatch.com/in/movie/dune-part-two",
+      "url": "https://www.netflix.com/title/81602836",
+      "chart": "World cinema · English",
+      "image": "https://images.justwatch.com/backdrop/310569186/s640/dune-part-two.avif"
+    },
+    {
       "id": "pradhama",
       "title": "Pradhama Drishtiya Kuttakkar",
       "kind": "Movie",
@@ -23,6 +63,60 @@
       "url": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.cc904c26-41a3-43bb-985c-70757e98611e",
       "chart": "JustWatch India movie charts · 12–15 Oct",
       "image": "https://images.justwatch.com/backdrop/345693006/s640/drishyam-3.jpg"
+    },
+    {
+      "id": "the-conjuring",
+      "title": "The Conjuring",
+      "kind": "Movie",
+      "year": "2013",
+      "language": "English",
+      "genres": ["Horror", "Thriller"],
+      "platform": "Prime Video",
+      "source": "https://www.justwatch.com/in/movie/the-conjuring",
+      "url": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.2eb10715-f27f-e730-ae85-a45fae7a5583",
+      "chart": "World cinema · English",
+      "image": "https://images.justwatch.com/backdrop/188692384/s640/the-conjuring.avif"
+    },
+    {
+      "id": "your-name",
+      "title": "Your Name.",
+      "kind": "Movie",
+      "year": "2016",
+      "language": "Japanese",
+      "genres": ["Anime", "Animation", "Romance", "Fantasy"],
+      "platform": "Crunchyroll",
+      "source": "https://www.justwatch.com/in/movie/your-name",
+      "url": "https://www.crunchyroll.com/watch/GEVUWZM1G",
+      "chart": "World cinema · Japanese",
+      "image": "https://images.justwatch.com/backdrop/11504191/s640/your-name.avif",
+      "aliases": ["Kimi no Na wa", "Your Name"]
+    },
+    {
+      "id": "parasite",
+      "title": "Parasite",
+      "kind": "Movie",
+      "year": "2019",
+      "language": "Korean",
+      "genres": ["Comedy", "Drama", "Thriller"],
+      "platform": "Check availability",
+      "source": "https://www.justwatch.com/in/movie/parasite",
+      "url": "https://www.justwatch.com/in/search?q=Parasite",
+      "chart": "World cinema · Korean · Recheck availability",
+      "image": "https://images.justwatch.com/backdrop/302249614/s640/parasite.avif",
+      "availability": "unverified"
+    },
+    {
+      "id": "paddington-2",
+      "title": "Paddington 2",
+      "kind": "Movie",
+      "year": "2017",
+      "language": "English",
+      "genres": ["Comedy", "Family", "Adventure"],
+      "platform": "Apple TV Store",
+      "source": "https://www.justwatch.com/in/movie/paddington-2",
+      "url": "https://tv.apple.com/in/movie/paddington-2/umc.cmc.6uanyirozllokd56zsopx7no1",
+      "chart": "World cinema · English · Rent or buy",
+      "image": "https://images.justwatch.com/backdrop/355198393/s640/paddington-2.avif"
     },
     {
       "id": "bethlehem",
@@ -47,6 +141,46 @@
       "image": "https://images.justwatch.com/backdrop/346321544/s640/mandaadi.jpg"
     },
     {
+      "id": "breaking-bad",
+      "title": "Breaking Bad",
+      "kind": "Series",
+      "year": "2008",
+      "language": "English",
+      "genres": ["Crime", "Drama", "Thriller"],
+      "platform": "Netflix",
+      "source": "https://www.justwatch.com/in/tv-show/breaking-bad",
+      "url": "https://www.netflix.com/title/70143836",
+      "chart": "World cinema · English",
+      "image": "https://images.justwatch.com/backdrop/176200275/s640/breaking-bad.avif"
+    },
+    {
+      "id": "dark",
+      "title": "Dark",
+      "kind": "Series",
+      "year": "2017",
+      "language": "German",
+      "genres": ["Science fiction", "Mystery", "Thriller"],
+      "platform": "Netflix",
+      "source": "https://www.justwatch.com/in/tv-show/dark",
+      "url": "https://www.netflix.com/title/80100172",
+      "chart": "World cinema · German",
+      "image": "https://images.justwatch.com/backdrop/348925764/s640/dark.avif"
+    },
+    {
+      "id": "squid-game",
+      "title": "Squid Game",
+      "kind": "Series",
+      "year": "2021",
+      "language": "Korean",
+      "genres": ["Thriller", "Drama", "Action"],
+      "platform": "Netflix",
+      "source": "https://www.justwatch.com/in/tv-show/squid-game",
+      "url": "https://www.netflix.com/title/81040344",
+      "chart": "World cinema · Korean",
+      "image": "https://images.justwatch.com/backdrop/305500208/s640/squid-game.avif",
+      "aliases": ["Ojingeo Game", "오징어 게임"]
+    },
+    {
       "id": "kapil",
       "title": "The Great Indian Kapil Show",
       "kind": "Series",
@@ -55,7 +189,7 @@
       "source": "https://www.netflix.com/tudum/top10/india/tv",
       "url": "https://www.netflix.com/title/81737430",
       "chart": "Netflix India weekly #1 · 5–11 Oct",
-      "image": "https://dnm.nflximg.net/api/v6/9R7jmI8ri5rJNRlvCsMBDHE5JuQ/AAAABTSkESzyusLVtWA4mMxtByETzdbg4WuQZQBicjQ0TPzhW2DZW30n789UpnfV44vCMF8XYLJjuwuyEKM_5wHnAUQMOqffo2fL0N4y72HRzV8.png?r=244"
+      "image": "https://dnm.nflximg.net/api/v6/LSExTNdA1vCOYNZ8eHZ6J0eyIcQ/AAAABUDvJ2oYjLPaK-lhhzg_us07p6XnbSK9dOzhgrzNQgeYzJI0eIlsfmV_RpAkfes-tt17XQdv-KU0oG0jVE0JP_SV_OT5D8EySzA.jpg?r=b7f"
     },
     {
       "id": "shaque",
@@ -66,7 +200,7 @@
       "source": "https://www.netflix.com/tudum/top10/india/tv",
       "url": "https://www.netflix.com/title/81762865",
       "chart": "Netflix India weekly #2 · 5–11 Oct",
-      "image": "https://dnm.nflximg.net/api/v6/9R7jmI8ri5rJNRlvCsMBDHE5JuQ/AAAABXVjUwnW6Phl-NItch9TxnX_Hv8SUMB86nWLJiiejaAbegSjL83sVBxEHTSsd4Gk5oOLU5sv8KzBjNUQ5pxoHyGuPbWLdx3p-Vx-a31OS1Q.png?r=449"
+      "image": "https://dnm.nflximg.net/api/v6/LSExTNdA1vCOYNZ8eHZ6J0eyIcQ/AAAABVEoUBwCBBnj_bKMRA8ffZZT19eMF6MRVBfTnfP0dKo3LMNpPOhtipnfdVNEsPD9UYXeON8iDmK5a5gn94tSPASdsk9rFltPu6Y.jpg?r=1ed"
     },
     {
       "id": "chumbak",
@@ -77,7 +211,7 @@
       "source": "https://www.netflix.com/tudum/top10/india/tv",
       "url": "https://www.netflix.com/title/82059219",
       "chart": "Netflix India weekly #3 · 5–11 Oct",
-      "image": "https://dnm.nflximg.net/api/v6/9R7jmI8ri5rJNRlvCsMBDHE5JuQ/AAAABSTP1zEu6FpgReie2PNmDSRagri6sLccTzK3StXxioB_j7L9N45UEIqjfUvM4i3CLrhepaoA4YDMAyZSBMdQZnR4z8Bdd8jrlU8a5Fdve_E.png?r=141"
+      "image": "https://dnm.nflximg.net/api/v6/LSExTNdA1vCOYNZ8eHZ6J0eyIcQ/AAAABTZ8k5-_XgYq_l_CEGiVGpksUmHac4B04J4ncpqwlp6mI6Ti26ZujSVL3yCaPwNt3W91bH176xmsiqAoo1Z-_VBxUs-Tnoatxw0.jpg?r=f5c"
     },
     {
       "id": "eden",
@@ -88,7 +222,7 @@
       "source": "https://www.netflix.com/tudum/top10/india/tv",
       "url": "https://www.netflix.com/title/81611854",
       "chart": "Netflix India weekly #9 · 5–11 Oct",
-      "image": "https://dnm.nflximg.net/api/v6/9R7jmI8ri5rJNRlvCsMBDHE5JuQ/AAAABX-k7PFMDNnPWyFODkCHhE9ujVGHVs6_1FIjicdtN8gt8v9vByQ6IW2Kxylrpehqo4P7fuO3yJkUU-uYWJjLYdTpk0VuQdJsZiQE7xyKSls.png?r=76a"
+      "image": "https://dnm.nflximg.net/api/v6/LSExTNdA1vCOYNZ8eHZ6J0eyIcQ/AAAABbZ1N7gHhmMcoZWv6H64NJVNR9tle0gpeIyAcYyQRdlb3boJ3IBWBUL32UXfoG6wweHcfudBvuVb_fzZv2_r2ihqXzka4M-T_ak.jpg?r=071"
     }
   ]
 }

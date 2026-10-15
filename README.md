@@ -42,16 +42,31 @@ videos; choosing a protected title does not enqueue its page URL as an MP4.
 
 ## Discovery
 
-The homepage displays real movies and series with India platform labels, links,
-source references and the date checked. The current list is a researched snapshot
-from JustWatch India movie charts and Netflix India's weekly series chart,
-checked on 15 October 2026. It is not a live ranking API. Keep `src/lib/discovery-data.json`
-updated when making new availability claims; check regional service access first.
+The homepage groups real international and Indian titles under Movies and Series,
+with a mix of genres, languages, recent chart entries and international favourites.
+The curated recommendations retain India platform labels, links and a shared
+source note. Availability was checked on 15 October 2026; it is not a live ranking
+API. Keep `src/lib/discovery-data.json` updated when making new availability claims.
 
-Format, genre and platform filters combine. Search tolerates typos. Chosen genre
-tastes reorder the chart-based recommendations. “Plan a watch party” carries the
-selection into a new streaming room; each viewer must open the actual title and
-connect their extension before synchronization starts.
+Typing at least two characters also searches Wikipedia's worldwide film catalogue
+and TVmaze's series catalogue through `/api/discovery`. Requests are debounced,
+stale responses are ignored, and provider failures preserve other results. The
+server bounds its cache to 200 queries, caches successful responses for an hour,
+and times out providers. No API key is required. Catalogue coverage is not exhaustive.
+
+Search normalizes accents, punctuation and non-Latin text, tolerates typos, and
+matches curated aliases, genres, languages and common platform names. Format,
+genre and platform filters combine; counts explain hidden matches and filters
+can be cleared. External catalogue results do not assert Indian streaming rights:
+they link to a JustWatch India availability search. Original broadcast networks
+are never treated as local subscription availability.
+
+Real artwork replaces logo-only cards. Film search batches Wikipedia poster
+lookups; series use TVmaze artwork. Portraits are contained rather than cropped,
+images load lazily, and unavailable artwork has a deliberate title-card fallback.
+Metadata and artwork credits are shared rather than repeated under each card.
+“Plan a watch party” carries the selection into a new streaming room; each viewer
+must open the actual title and connect their extension before synchronization.
 
 ## Film clubs
 

@@ -80,7 +80,10 @@ export function StreamingPanel({
             {selection.kind} · {selection.platform} · India
           </p>
           <a className="action-secondary" href={selection.url} target="_blank" rel="noreferrer">
-            Open on {selection.platform} <ExternalLink size={14} />
+            {selection.availability === "unverified"
+              ? "Check where to watch in India"
+              : `Open on ${selection.platform}`}{" "}
+            <ExternalLink size={14} />
           </a>
           <p className="feature-muted">
             Open the actual episode, then connect the extension from that tab. The connected host’s

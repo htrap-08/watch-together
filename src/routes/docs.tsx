@@ -107,11 +107,18 @@ function Docs() {
       </ul>
       <h2>Discovery sources</h2>
       <p>
-        Homepage recommendations are real movies and series for India, checked on 15 October 2026.
-        They are an editorial snapshot of recent JustWatch movie charts and Netflix’s India weekly
-        series chart, with per-title availability sources. Search tolerates typos; format, genre and
-        platform filters combine, and chosen tastes reorder recommendations. This is not a live
-        popularity API.
+        Homepage recommendations mix international and Indian films and series, grouped under Movies
+        and Series. The selection includes recent chart picks and international favourites, with
+        Indian streaming availability checked on 15 October 2026. This is not a live popularity
+        ranking. Search also queries Wikipedia’s worldwide movie catalogue and TVmaze’s series
+        catalogue; external matches link to an India availability check rather than claiming a local
+        platform. Both catalogues have coverage gaps. Search handles punctuation, accents and typos;
+        filters explain hidden results and can be cleared. Shared metadata credits:{" "}
+        <a href="https://en.wikipedia.org/">Wikipedia</a> and{" "}
+        <a href="https://www.tvmaze.com/">TVmaze</a> (
+        <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA</a>); curated
+        availability from <a href="https://www.justwatch.com/in">JustWatch India</a> and{" "}
+        <a href="https://www.netflix.com/tudum/top10/india/tv">Netflix</a>.
       </p>
       <h2>Media credits</h2>
       <p>

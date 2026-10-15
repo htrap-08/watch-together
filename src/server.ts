@@ -47,6 +47,10 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      if (new URL(request.url).pathname === "/api/discovery") {
+        const { discoveryRequest } = await import("./lib/discovery-search");
+        return discoveryRequest(request);
+      }
       if (
         new URL(request.url).pathname === "/api/clubs" ||
         new URL(request.url).pathname.startsWith("/api/clubs/")
