@@ -26,6 +26,8 @@ import {
   Vote,
 } from "lucide-react";
 import { resolveVideo } from "@/lib/catalog";
+import { DirectVideoForm } from "@/components/direct-video-form";
+import { videoLoadError } from "@/lib/direct-video";
 import { ScreenSharePanel } from "@/components/screen-share-panel";
 import { loadMe, saveMe } from "@/lib/identity";
 import { useRoom, type Me } from "@/lib/room-engine";
@@ -99,7 +101,6 @@ function Room() {
   const initialLoaded = useRef(false);
   const [text, setText] = useState("");
   const [tab, setTab] = useState<"chat" | "queue" | "people" | "poll">("chat");
-  const [mediaUrl, setMediaUrl] = useState("");
   const [notice, setNotice] = useState("");
   const [copied, setCopied] = useState(false);
   const [time, setTime] = useState(0);
@@ -369,9 +370,7 @@ function Room() {
                   onCanPlay={() => room.api.setPlayerStatus("Player connected")}
                   onError={() => {
                     room.api.setPlayerStatus("Player could not load");
-                    setMediaError(
-                      "This video couldn’t load. Try another film or check the video link.",
-                    );
+                    setMediaError(videoLoadError(v.current?.error?.code));
                   }}
                   onEnded={() => {
                     room.api.finish();
@@ -383,13 +382,13 @@ function Room() {
                       <Film size={34} />
                     </span>
                     <h2>What are we watching?</h2>
-                    <p>Add your own direct video link to the queue.</p>
+                    <p>Load a public video file link, then start together.</p>
                     <a
                       href="#room-discover"
                       className="action-primary"
                       onClick={() =>
                         document
-                          .querySelector<HTMLDetailsElement>(".room-library")
+                          .querySelector<HTMLDetailsElement>("#room-discover")
                           ?.setAttribute("open", "")
                       }
                     >
@@ -579,40 +578,20 @@ function Room() {
                   Add your own video <Plus size={16} />
                 </summary>
                 <section className="room-discovery">
-                  <form
-                    className="video-link-form"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      try {
-                        const url = new URL(mediaUrl);
-                        if (!["http:", "https:"].includes(url.protocol)) throw new Error();
-                        room.api.enqueue(url.href);
-                        setMediaUrl("");
+                  <DirectVideoForm
+                    connected={connected}
+                    loadFirst={room.canControl && !movie}
+                    onAdd={(url) => {
+                      if (room.canControl && !room.state.playback.videoId) {
+                        room.api.load(url);
+                        setNotice("Video loaded. Mark ready, then start together.");
+                      } else {
+                        room.api.enqueue(url);
                         setTab("queue");
-                        setNotice("Video link added to the queue.");
-                      } catch {
-                        setNotice("Enter a complete HTTP or HTTPS video URL.");
+                        setNotice("Video added. The host can choose Play next in the queue.");
                       }
                     }}
-                  >
-                    <div>
-                      <b>Bring your own video</b>
-                      <p>Direct MP4 or WebM links work here. Streaming-service page links don’t.</p>
-                    </div>
-                    <div>
-                      <input
-                        type="url"
-                        aria-label="Direct video URL"
-                        placeholder="https://…/video.mp4"
-                        value={mediaUrl}
-                        onChange={(e) => setMediaUrl(e.target.value)}
-                        required
-                      />
-                      <button className="action-secondary" disabled={!connected} type="submit">
-                        <Plus size={16} /> Add
-                      </button>
-                    </div>
-                  </form>
+                  />
                 </section>
               </details>
             </>
